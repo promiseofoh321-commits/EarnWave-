@@ -15,7 +15,10 @@ TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 REWARD_PER_AD = 0.003
 CHECKIN_REWARD = 0.01
 DAILY_AD_LIMIT = 50
+MIN_WITHDRAWAL = 0.25
 
+
+# ---------- Database ----------
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -82,10 +85,14 @@ def log_activity(user_id, label, amount, type_):
     conn.close()
 
 
+# ---------- Mini App page ----------
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
+# ---------- API ----------
 
 @app.route("/api/user/<user_id>", methods=["GET"])
 def get_user(user_id):
@@ -111,6 +118,9 @@ def get_user(user_id):
 
 @app.route("/api/reward", methods=["GET", "POST"])
 def adsgram_reward():
+    """Adsgram calls this when a user finishes a rewarded ad.
+    Set as Reward URL in Adsgram: https://YOUR-URL/api/reward?userId=[userId]
+    """
     user_id = request.args.get("userId") or request.form.get("userId")
     if not user_id:
         return jsonify({"error": "missing userId"}), 400
@@ -168,6 +178,9 @@ def request_withdrawal():
     if not user_id or not wallet or amount <= 0:
         return jsonify({"error": "invalid request"}), 400
 
+    if amount < MIN_WITHDRAWAL:
+        return jsonify({"error": f"minimum withdrawal is ${MIN_WITHDRAWAL:.3f}"}), 400
+
     user = get_or_create_user(user_id)
     if amount > user["balance"]:
         return jsonify({"error": "amount exceeds balance"}), 400
@@ -204,6 +217,8 @@ def register_referral():
     return jsonify({"status": "ok"})
 
 
+# ---------- Telegram bot webhook ----------
+
 def send_message(chat_id, text, reply_markup=None):
     payload = {"chat_id": chat_id, "text": text}
     if reply_markup:
@@ -238,7 +253,7 @@ def bot_webhook():
             except requests.RequestException:
                 logging.warning("Failed to register referral")
 
-        webapp_url = request.url_root
+        webapp_url = request.url_root  # same domain serves the Mini App at "/"
         reply_markup = {
             "inline_keyboard": [[
                 {"text": "Open EarnWave", "web_app": {"url": webapp_url}}
@@ -258,6 +273,7 @@ def bot_webhook():
 
 @app.route("/set-webhook")
 def set_webhook():
+    """Visit this URL once after deploying to register the bot webhook."""
     webhook_url = request.url_root + "bot-webhook"
     resp = requests.get(f"{TELEGRAM_API}/setWebhook", params={"url": webhook_url})
     return jsonify(resp.json())
