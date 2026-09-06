@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>EarnWave</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<script src='//libtl.com/sdk.js' data-zone='11739907' data-sdk='show_11739907'></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -308,7 +308,7 @@
     <div class="watch-play">&#9654;</div>
     <div class="watch-text">
       <div class="t">Watch ad</div>
-      <div class="s">Earn $0.003 per ad</div>
+      <div class="s">Earn $0.005 per ad</div>
     </div>
     <div class="watch-arrow">&rsaquo;</div>
   </button>
@@ -486,7 +486,7 @@
 
   const BLOCK_ID = "46468";
   const BOT_USERNAME = "EarnWave2009_bot";
-  const REWARD_PER_AD = 0.003;
+  const REWARD_PER_AD = 0.005;
   const CHECKIN_REWARD = 0.01;
   const DAILY_AD_LIMIT = 50;
   const SEGMENT_COUNT = 10;
@@ -604,25 +604,20 @@
     el('statusMsg').className = 'status' + (type ? ' ' + type : '');
   }
 
-  // Ad SDK
-  let AdController = null;
-  try { AdController = window.Adsgram.init({ blockId: BLOCK_ID }); }
-  catch (e) { el('adErrorBanner').style.display = 'flex'; }
-
+  // Ad SDK (Monetag)
   el('retryAdBtn').addEventListener('click', () => {
-    try { AdController = window.Adsgram.init({ blockId: BLOCK_ID }); el('adErrorBanner').style.display = 'none'; }
-    catch (e) { setStatus('Still unable to load ads.', 'error'); }
+    el('adErrorBanner').style.display = 'none';
   });
 
   el('watchBtn').addEventListener('click', () => {
     if (state.adsToday >= DAILY_AD_LIMIT) return;
-    if (!AdController) { el('adErrorBanner').style.display = 'flex'; return; }
+    if (typeof show_11739907 !== 'function') { el('adErrorBanner').style.display = 'flex'; return; }
     el('watchBtn').disabled = true;
     setStatus('Loading ad\u2026');
-    AdController.show()
+    show_11739907({ ymid: String(userId) })
       .then(async () => {
-        // Adsgram calls /api/reward server-side on completion. Give it a moment
-        // to land before refetching, so the balance shown is accurate.
+        // Monetag calls /api/reward server-side via postback on completion. Give it
+        // a moment to land before refetching, so the balance shown is accurate.
         await new Promise(r => setTimeout(r, 1200));
         await loadState();
         bumpBalance();
