@@ -12,8 +12,8 @@ DB_PATH = os.environ.get("DB_PATH", "earnwave.db")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-REWARD_PER_AD = 0.003
-CHECKIN_REWARD = 0.01
+REWARD_PER_AD = 0.005
+CHECKIN_REWARD = 0.015
 DAILY_AD_LIMIT = 50
 MIN_WITHDRAWAL = 0.25
 
