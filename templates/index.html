@@ -388,11 +388,45 @@
   </div>
 </div>
 <div class="page" id="page-profile">
-  <div class="row-card" style="margin-top:16px;">
-    <div class="row-body">
-      <div class="row-title">Your profile</div>
-      <div class="row-sub" id="profileUserDisplay">Telegram user</div>
+  <div class="row-card" style="margin-top:16px; flex-direction: column; align-items: flex-start;">
+    <div class="row-icon ref" style="width:56px; height:56px; font-size:22px; margin-bottom:10px;">&#128100;</div>
+    <div class="row-title" id="profileUserDisplay" style="font-size:16px;">Telegram user</div>
+    <div class="row-sub" id="profileUserIdDisplay">ID —</div>
+  </div>
+
+  <div class="stat-card-row" style="margin-top:16px;">
+    <div class="stat-card">
+      <div class="stat-circle green">&#128176;</div>
+      <div class="stat-l">Total earned</div>
+      <div class="stat-v" id="profileTotalEarned">$0.00</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-circle blue">&#128065;</div>
+      <div class="stat-l">Ads watched</div>
+      <div class="stat-v" id="profileTotalAds">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-circle purple">&#128101;</div>
+      <div class="stat-l">Referrals</div>
+      <div class="stat-v" id="profileReferrals">0</div>
+    </div>
+  </div>
+
+  <div class="row-card">
+    <div class="row-icon gift">&#128293;</div>
+    <div class="row-body">
+      <div class="row-title">Check-in streak</div>
+      <div class="row-sub" id="profileStreak">0 days</div>
+    </div>
+  </div>
+
+  <div class="row-card">
+    <div class="row-icon ref">&#128179;</div>
+    <div class="row-body">
+      <div class="row-title">Available balance</div>
+      <div class="row-sub" id="profileBalance">$0.000</div>
+    </div>
+    <button class="row-btn" id="profileWithdrawBtn">Withdraw &rsaquo;</button>
   </div>
 </div>
 
@@ -408,7 +442,7 @@
 <div class="overlay" id="withdrawOverlay">
   <div class="sheet">
     <h3>Withdraw funds</h3>
-    <div class="desc">Minimum withdrawal is $1.000. Requests are reviewed and paid out manually for now.</div>
+    <div class="desc">Minimum withdrawal is $0.250. Requests are reviewed and paid out manually for now.</div>
     <label class="field-label">TON wallet address</label>
     <input class="field-input" id="walletInput" placeholder="UQ...">
     <label class="field-label">Amount (USD)</label>
@@ -456,7 +490,7 @@
   const CHECKIN_REWARD = 0.01;
   const DAILY_AD_LIMIT = 50;
   const SEGMENT_COUNT = 10;
-  const MIN_WITHDRAWAL = 1.0;
+  const MIN_WITHDRAWAL = 0.25;
   const API_BASE = ""; // same origin — this page and the API live on the same server
 
   const userId = tg?.initDataUnsafe?.user?.id || "guest";
@@ -494,7 +528,13 @@
     el('totalEarnedDisplay').textContent = '$' + state.totalEarned.toFixed(2);
     el('referralCountDisplay').textContent = state.referralCount;
     el('referralsPageSub').textContent = state.referralCount + ' friends joined so far. Tap Invite on Home to share your link.';
-    el('profileUserDisplay').textContent = userName + ' \u2022 ID ' + userId;
+    el('profileUserDisplay').textContent = userName;
+    el('profileUserIdDisplay').textContent = 'ID ' + userId;
+    el('profileTotalEarned').textContent = '$' + state.totalEarned.toFixed(2);
+    el('profileTotalAds').textContent = state.history.filter(h => h.type === 'ad').length;
+    el('profileReferrals').textContent = state.referralCount;
+    el('profileStreak').textContent = state.checkinStreak + (state.checkinStreak === 1 ? ' day' : ' days');
+    el('profileBalance').textContent = '$' + state.balance.toFixed(3);
 
     el('segmentLabel').textContent = state.adsToday + ' / ' + DAILY_AD_LIMIT + ' ads today';
     const filled = Math.round((state.adsToday / DAILY_AD_LIMIT) * SEGMENT_COUNT);
@@ -666,6 +706,7 @@
   });
   el('notifClose').addEventListener('click', () => el('notifOverlay').classList.remove('show'));
   el('profileBtn').addEventListener('click', () => switchPage('profile'));
+  el('profileWithdrawBtn').addEventListener('click', openWithdraw);
 
   document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('show'); }));
 
