@@ -118,12 +118,23 @@ def get_user(user_id):
 
 @app.route("/api/reward", methods=["GET", "POST"])
 def adsgram_reward():
-    """Adsgram calls this when a user finishes a rewarded ad.
-    Set as Reward URL in Adsgram: https://YOUR-URL/api/reward?userId=[userId]
+    """Called by the ad network when a user finishes a rewarded ad.
+    Accepts both 'userId' (Adsgram-style) and 'user_id' (Monetag-style) params.
     """
-    user_id = request.args.get("userId") or request.form.get("userId")
+    user_id = (
+        request.args.get("userId")
+        or request.args.get("user_id")
+        or request.form.get("userId")
+        or request.form.get("user_id")
+    )
     if not user_id:
         return jsonify({"error": "missing userId"}), 400
+
+    # Monetag sends event=impression&reward=valued for a real, paid ad view.
+    # If reward info is present and says it's not valid, skip crediting.
+    reward_status = request.args.get("reward")
+    if reward_status and reward_status not in ("valued", "yes", "true"):
+        return jsonify({"status": "ignored", "reason": "reward not valued"}), 200
 
     user = get_or_create_user(user_id)
     user = reset_daily_if_needed(user_id, user)
