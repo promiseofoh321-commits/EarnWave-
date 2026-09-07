@@ -19,8 +19,6 @@ DAILY_AD_LIMIT = 50
 MIN_WITHDRAWAL = 0.25
 
 
-# ---------- Database Setup ----------
-
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -86,14 +84,10 @@ def log_activity(user_id, label, amount, type_):
     conn.close()
 
 
-# ---------- Mini App Page ----------
-
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
-# ---------- API Endpoints ----------
 
 @app.route("/api/user/<user_id>", methods=["GET"])
 def get_user(user_id):
@@ -119,15 +113,19 @@ def get_user(user_id):
 
 @app.route("/api/reward", methods=["GET", "POST"])
 def ads_reward():
-    """Triggered when a user completes a rewarded ad view."""
-    user_id = (
-        request.args.get("userId")
-        or request.args.get("user_id")
-        or request.form.get("userId")
-        or request.form.get("user_id")
-    )
+    """Postback endpoint configured for Monetag S2S."""
+    user_id = request.args.get("user_id") or request.form.get("user_id")
+    event_type = request.args.get("event") or request.form.get("event")
+    reward_status = request.args.get("reward") or request.form.get("reward")
+
     if not user_id:
-        return jsonify({"error": "missing userId"}), 400
+        return jsonify({"error": "missing user_id"}), 400
+
+    if event_type and event_type != "impression":
+        return jsonify({"status": "ignored", "reason": "not an impression event"}), 200
+
+    if reward_status and reward_status not in ("yes", "true", "valued"):
+        return jsonify({"status": "ignored", "reason": "reward not valued"}), 200
 
     user = get_or_create_user(user_id)
     user = reset_daily_if_needed(user_id, user)
@@ -142,9 +140,13 @@ def ads_reward():
     )
     conn.commit()
     conn.close()
-    
+
     log_activity(user_id, "Ad reward", REWARD_PER_AD, "ad")
-    send_message(ADMIN_ID, f"📺 Ad watched by user {user_id} — +${REWARD_PER_AD:.3f}")
+    try:
+        requests.post(f"{TELEGRAM_API}/sendMessage", json={"chat_id": ADMIN_ID, "text": f"📺 Ad watched by user {user_id} — +${REWARD_PER_AD:.3f}"}, timeout=5)
+    except requests.RequestException:
+        pass
+
     return jsonify({"status": "ok", "reward": REWARD_PER_AD})
 
 
@@ -172,7 +174,6 @@ def daily_checkin():
     conn.close()
     
     log_activity(user_id, "Daily check-in", CHECKIN_REWARD, "checkin")
-    send_message(ADMIN_ID, f"📅 Check-in by user {user_id} — streak: {streak}")
     return jsonify({"status": "ok", "reward": CHECKIN_REWARD, "streak": streak})
 
 
@@ -199,10 +200,6 @@ def request_withdrawal():
     conn.close()
     
     log_activity(user_id, f"Withdrawal requested to {wallet}", -amount, "withdraw")
-    send_message(
-        ADMIN_ID,
-        f"💸 Withdrawal request!\nUser: {user_id}\nAmount: ${amount:.3f}\nWallet: {wallet}"
-    )
     return jsonify({"status": "ok"})
 
 
@@ -229,20 +226,7 @@ def register_referral():
     conn.close()
     
     log_activity(referrer_id, f"Referral joined: {new_user_name}", 0, "referral")
-    send_message(referrer_id, f"🎉 {new_user_name} just joined EarnWave using your referral link!")
     return jsonify({"status": "ok"})
-
-
-# ---------- Telegram Bot Webhook ----------
-
-def send_message(chat_id, text, reply_markup=None):
-    payload = {"chat_id": chat_id, "text": text}
-    if reply_markup:
-        payload["reply_markup"] = reply_markup
-    try:
-        requests.post(f"{TELEGRAM_API}/sendMessage", json=payload, timeout=5)
-    except requests.RequestException:
-        logging.warning("Failed to send Telegram message")
 
 
 @app.route("/bot-webhook", methods=["POST"])
@@ -271,7 +255,7 @@ def bot_webhook():
                     timeout=5,
                 )
             except requests.RequestException:
-                logging.warning("Failed to register referral")
+                pass
 
         webapp_url = request.url_root
         reply_markup = {
@@ -280,13 +264,18 @@ def bot_webhook():
             ]]
         }
         first_name = user.get("first_name", "there")
-        send_message(
-            chat_id,
-            f"Welcome to EarnWave, {first_name}!\n\n"
-            "Watch ads, earn rewards, and cash out once you hit the minimum balance.\n\n"
-            "Tap below to open the app.",
-            reply_markup=reply_markup,
-        )
+        try:
+            requests.post(
+                f"{TELEGRAM_API}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": f"Welcome to EarnWave, {first_name}!\n\nWatch ads, earn rewards, and cash out once you hit the minimum balance.\n\nTap below to open the app.",
+                    "reply_markup": reply_markup
+                },
+                timeout=5
+            )
+        except requests.RequestException:
+            pass
 
     return jsonify({"ok": True})
 
