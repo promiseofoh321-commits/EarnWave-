@@ -1,729 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EarnWave</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src='//libtl.com/sdk.js' data-zone='11739907' data-sdk='show_11739907'></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0A1628;
-    color: #F0F5FC;
-    min-height: 100vh;
-    padding-bottom: 84px;
-  }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 18px 8px;
-  }
-
-  .brand-row { display: flex; align-items: center; gap: 10px; }
-
-  .brand-name { font-size: 19px; font-weight: 700; }
-  .brand-name .wave { color: #29B6F6; }
-  .brand-tag { font-size: 11px; color: #7C8DAE; margin-top: 1px; }
-
-  .top-icons { display: flex; gap: 10px; }
-  .icon-btn {
-    position: relative;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: #142238;
-    border: none;
-    color: #F0F5FC;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  .icon-btn .dot {
-    position: absolute; top: 5px; right: 6px;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #FF5D5D; display: none;
-  }
-  .icon-btn .dot.show { display: block; }
-
-  .page { display: none; padding: 4px 18px 0; }
-  .page.active { display: block; }
-
-  .balance-card {
-    background: linear-gradient(135deg, #1565C0 0%, #29B6F6 100%);
-    border-radius: 18px;
-    padding: 20px;
-    margin-top: 10px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .balance-top { display: flex; justify-content: space-between; align-items: flex-start; }
-  .balance-left { display: flex; gap: 12px; align-items: flex-start; }
-
-  .balance-icon {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: rgba(255,255,255,0.22);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-
-  .balance-label { font-size: 12px; color: rgba(255,255,255,0.85); }
-  .balance-figure { font-size: 30px; font-weight: 700; margin-top: 2px; transition: transform 0.2s ease; }
-  .balance-figure.bump { transform: scale(1.05); }
-  .balance-naira { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
-
-  .withdraw-pill {
-    background: rgba(255,255,255,0.18);
-    border: none;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 700;
-    border-radius: 999px;
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: 6px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .balance-sub-row {
-    display: flex;
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.22);
-  }
-  .balance-sub-item { flex: 1; }
-  .balance-sub-item .l { font-size: 11px; color: rgba(255,255,255,0.8); }
-  .balance-sub-item .v { font-size: 15px; font-weight: 700; margin-top: 2px; }
-
-  .watch-card {
-    margin-top: 14px;
-    background: linear-gradient(135deg, #29B6F6, #1CA7D4);
-    border-radius: 16px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    border: none;
-    width: 100%;
-    color: #06131F;
-  }
-  .watch-play {
-    width: 42px; height: 42px; border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-  .watch-text { text-align: left; flex: 1; }
-  .watch-text .t { font-size: 15px; font-weight: 700; }
-  .watch-text .s { font-size: 12px; color: rgba(6,19,31,0.75); margin-top: 1px; }
-  .watch-arrow { font-size: 18px; }
-  .watch-card:disabled { opacity: 0.55; cursor: not-allowed; }
-
-  .segment-row { display: flex; gap: 4px; margin-top: 10px; }
-  .segment { flex: 1; height: 6px; border-radius: 4px; background: #1A2C48; }
-  .segment.filled { background: #29B6F6; }
-  .segment-label { text-align: right; font-size: 11px; color: #7C8DAE; margin-top: 6px; }
-
-  .status { text-align: center; font-size: 13px; color: #7C8DAE; min-height: 18px; margin-top: 10px; }
-  .status.error { color: #FF8080; }
-  .status.success { color: #4ADE80; }
-
-  .stat-card-row { display: flex; gap: 10px; margin-top: 16px; }
-  .stat-card {
-    flex: 1;
-    background: #101E36;
-    border-radius: 14px;
-    padding: 14px 10px;
-    text-align: center;
-  }
-  .stat-circle {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; margin: 0 auto 8px;
-  }
-  .stat-circle.blue { background: #1E4A79; color: #29B6F6; }
-  .stat-circle.green { background: #124F3B; color: #34D399; }
-  .stat-circle.purple { background: #3A1E6B; color: #A78BFA; }
-  .stat-l { font-size: 11px; color: #7C8DAE; }
-  .stat-v { font-size: 15px; font-weight: 700; margin-top: 2px; }
-
-  .row-card {
-    margin-top: 12px;
-    background: #101E36;
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .row-icon {
-    width: 40px; height: 40px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px; flex-shrink: 0;
-  }
-  .row-icon.gift { background: #3A1E6B; color: #C4A6FF; }
-  .row-icon.ref { background: #1E4A79; color: #7CC5F5; }
-  .row-body { flex: 1; }
-  .row-title { font-size: 14px; font-weight: 700; }
-  .row-sub { font-size: 12px; color: #7C8DAE; margin-top: 1px; }
-  .row-btn {
-    background: #1E4A79;
-    border: none;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 999px;
-    padding: 9px 13px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .row-btn:disabled { opacity: 0.5; }
-
-  .activity-card {
-    margin-top: 16px;
-    background: #101E36;
-    border-radius: 14px;
-    padding: 16px;
-  }
-  .activity-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .activity-head h3 { font-size: 14px; font-weight: 700; }
-  .activity-head span { font-size: 12px; color: #29B6F6; }
-
-  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #1A2C48; font-size: 13px; }
-  .log-item:last-child { border-bottom: none; }
-  .log-left { display: flex; align-items: center; }
-  .log-icon { width: 24px; height: 24px; border-radius: 50%; background: #124F3B; color: #34D399; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-right: 9px; flex-shrink: 0; }
-  .log-icon.neg { background: #5A2323; color: #FF8080; }
-  .log-amt { color: #34D399; font-weight: 700; }
-  .log-amt.neg { color: #FF8080; }
-  .log-time { color: #5A6B8C; font-size: 11px; margin-left: 8px; }
-  .log-empty { text-align: center; color: #5A6B8C; font-size: 13px; padding: 16px 0; }
-
-  .error-banner {
-    margin-top: 16px;
-    background: #2A1414;
-    border: 1px solid #5A2323;
-    border-radius: 14px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .error-banner .ic { color: #FF5D5D; font-size: 18px; }
-  .error-banner .t { font-size: 13px; font-weight: 700; color: #FF8080; }
-  .error-banner .d { font-size: 11px; color: #B08A8A; margin-top: 1px; }
-  .error-banner button {
-    background: #5A2323; border: none; color: #FFB0B0;
-    border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
-    margin-left: auto; white-space: nowrap;
-  }
-
-  /* Bottom nav */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: #0D1B30;
-    border-top: 1px solid #1A2C48;
-    display: flex;
-    padding: 10px 6px calc(10px + env(safe-area-inset-bottom));
-    z-index: 5;
-  }
-  .nav-item {
-    flex: 1;
-    background: none; border: none;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    color: #5A6B8C;
-    font-size: 10px;
-    cursor: pointer;
-  }
-  .nav-item .ic { font-size: 18px; }
-  .nav-item.active { color: #29B6F6; }
-
-  /* Modal sheets */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 10; align-items: flex-end; justify-content: center; }
-  .overlay.show { display: flex; }
-  .sheet { background: #101E36; width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 22px 20px 28px; }
-  .sheet h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-  .sheet .desc { font-size: 13px; color: #7C8DAE; margin-bottom: 18px; }
-  .field-label { font-size: 12px; color: #7C8DAE; margin-bottom: 6px; display: block; }
-  .field-input { width: 100%; background: #142238; border: 1px solid #1A2C48; color: #F0F5FC; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
-  .field-input::placeholder { color: #5A6B8C; }
-  .field-error { font-size: 12px; color: #FF8080; margin: -8px 0 12px; display: none; }
-  .field-error.show { display: block; }
-  .sheet-btns { display: flex; gap: 10px; margin-top: 6px; }
-  .btn-secondary { flex: 1; background: transparent; border: 1px solid #1A2C48; color: #F0F5FC; border-radius: 999px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn-primary-small { flex: 2; background: #29B6F6; border: none; color: #06131F; border-radius: 999px; padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .link-box { background: #142238; border: 1px solid #1A2C48; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #7C8DAE; word-break: break-all; margin-bottom: 14px; }
-  .notif-item { padding: 12px 0; border-bottom: 1px solid #1A2C48; }
-  .notif-item:last-child { border-bottom: none; }
-  .notif-item .t { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-  .notif-item .d { font-size: 12px; color: #7C8DAE; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EarnWave Mini App</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Google Fonts & Custom CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b132b;
+            --card-bg: #1c2541;
+            --accent-blue: #3a86ff;
+            --text-white: #ffffff;
+            --text-gray: #8d99ae;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .app-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .app-title p {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+        .balance-card {
+            background: linear-gradient(135deg, #3a86ff, #2563eb);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+        .balance-card .label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .balance-card .amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 8px 0 16px 0;
+        }
+        .action-btn {
+            background-color: var(--card-bg);
+            border: none;
+            border-radius: 12px;
+            width: 100%;
+            padding: 16px;
+            color: var(--text-white);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .action-btn span {
+            color: var(--accent-blue);
+        }
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #080f24;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-item {
+            color: var(--text-gray);
+            font-size: 11px;
+            text-align: center;
+            text-decoration: none;
+        }
+        .nav-item.active {
+            color: var(--accent-blue);
+        }
+    </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand-row">
-    <div>
-      <div class="brand-name"><span class="wave">Earn</span>Wave</div>
-      <div class="brand-tag">Watch &middot; Earn &middot; Withdraw</div>
-    </div>
-  </div>
-  <div class="top-icons">
-    <button class="icon-btn" id="profileBtn">&#128100;</button>
-    <button class="icon-btn" id="bellBtn">&#128276;<span class="dot show" id="bellDot"></span></button>
-  </div>
-</div>
-
-<!-- HOME PAGE -->
-<div class="page active" id="page-home">
-
-  <div class="balance-card">
-    <div class="balance-top">
-      <div class="balance-left">
-        <div class="balance-icon">&#128179;</div>
-        <div>
-          <div class="balance-label">Available balance</div>
-          <div class="balance-figure" id="balanceDisplay">$0.000</div>
+    <div class="header">
+        <div class="app-title">
+            <h1 id="username">EarnWave</h1>
+            <p>Watch • Earn • Withdraw</p>
         </div>
-      </div>
-      <button class="withdraw-pill" id="withdrawPillBtn">&#128179; Withdraw &rsaquo;</button>
     </div>
-    <div class="balance-sub-row">
-      <div class="balance-sub-item">
-        <div class="l">Today's earnings</div>
-        <div class="v" id="todayEarnedDisplay">$0.000</div>
-      </div>
-      <div class="balance-sub-item">
-        <div class="l">Ads watched</div>
-        <div class="v" id="adCountTodayDisplay">0</div>
-      </div>
+
+    <div class="balance-card">
+        <div class="label">Available balance</div>
+        <div class="amount" id="balance">$0.010</div>
+        <div style="font-size: 12px; opacity: 0.9;">Today's earnings: $0.000</div>
     </div>
-  </div>
 
-  <button class="watch-card" id="watchBtn">
-    <div class="watch-play">&#9654;</div>
-    <div class="watch-text">
-      <div class="t">Watch ad</div>
-      <div class="s">Earn $0.005 per ad</div>
+    <button class="action-btn" id="watchVideoBtn">
+        <div>
+            <div style="text-align: left;">Watch Bonus Video</div>
+            <div style="font-size: 12px; color: var(--text-gray); font-weight: normal; margin-top: 4px;">Earn $0.003 per view</div>
+        </div>
+        <span>▶</span>
+    </button>
+
+    <div class="nav-bar">
+        <a href="#" class="nav-item active">Home</a>
+        <a href="#" class="nav-item">Earn</a>
+        <a href="#" class="nav-item">Referrals</a>
+        <a href="#" class="nav-item">Withdraw</a>
+        <a href="#" class="nav-item">Profile</a>
     </div>
-    <div class="watch-arrow">&rsaquo;</div>
-  </button>
-  <div class="segment-row" id="segmentRow"></div>
-  <div class="segment-label" id="segmentLabel">0 / 50 ads today</div>
-  <div class="status" id="statusMsg"></div>
 
-  <div class="stat-card-row">
-    <div class="stat-card">
-      <div class="stat-circle blue">&#128065;</div>
-      <div class="stat-l">Ads watched</div>
-      <div class="stat-v" id="totalAdsDisplay">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-circle green">&#128176;</div>
-      <div class="stat-l">Total earned</div>
-      <div class="stat-v" id="totalEarnedDisplay">$0.00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-circle purple">&#128101;</div>
-      <div class="stat-l">Referrals</div>
-      <div class="stat-v" id="referralCountDisplay">0</div>
-    </div>
-  </div>
+    <script>
+        // Initialize Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-  <div class="row-card">
-    <div class="row-icon gift">&#127873;</div>
-    <div class="row-body">
-      <div class="row-title" id="checkinTitle">Daily bonus</div>
-      <div class="row-sub" id="checkinSub">Come back every day and claim your bonus.</div>
-    </div>
-    <button class="row-btn" id="checkinBtn">Claim $0.01 &rsaquo;</button>
-  </div>
+        // Personalize title if user data exists
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name || "EarnWave";
+        }
 
-  <div class="row-card">
-    <div class="row-icon ref">&#128101;</div>
-    <div class="row-body">
-      <div class="row-title">Invite &amp; earn</div>
-      <div class="row-sub">Get rewarded when your friends join EarnWave.</div>
-    </div>
-    <button class="row-btn" id="inviteBtn">Invite &rsaquo;</button>
-  </div>
-
-  <div class="activity-card">
-    <div class="activity-head">
-      <h3>Recent activity</h3>
-      <span id="viewAllBtn">View all &rsaquo;</span>
-    </div>
-    <div id="historyList"><div class="log-empty">No recent earnings yet</div></div>
-  </div>
-
-  <div class="error-banner" id="adErrorBanner" style="display:none;">
-    <span class="ic">&#9888;</span>
-    <div>
-      <div class="t">Ad network failed to load</div>
-      <div class="d">Try reloading or check your connection.</div>
-    </div>
-    <button id="retryAdBtn">Retry</button>
-  </div>
-
-</div>
-
-<!-- Other nav pages point back to relevant sheets/actions for now -->
-<div class="page" id="page-earn">
-  <div class="row-card" style="margin-top:16px;">
-    <div class="row-body"><div class="row-title">Watch ads to earn</div><div class="row-sub">Use the Watch ad button on Home to start earning.</div></div>
-  </div>
-</div>
-<div class="page" id="page-referrals">
-  <div class="row-card" style="margin-top:16px;">
-    <div class="row-body"><div class="row-title">Your referrals</div><div class="row-sub" id="referralsPageSub">0 friends joined so far. Tap Invite on Home to share your link.</div></div>
-  </div>
-</div>
-<div class="page" id="page-withdraw">
-  <div class="row-card" style="margin-top:16px;">
-    <div class="row-body"><div class="row-title">Withdraw funds</div><div class="row-sub">Tap Withdraw on Home to request a payout.</div></div>
-  </div>
-</div>
-<div class="page" id="page-profile">
-  <div class="row-card" style="margin-top:16px; flex-direction: column; align-items: flex-start;">
-    <div class="row-icon ref" style="width:56px; height:56px; font-size:22px; margin-bottom:10px;">&#128100;</div>
-    <div class="row-title" id="profileUserDisplay" style="font-size:16px;">Telegram user</div>
-    <div class="row-sub" id="profileUserIdDisplay">ID —</div>
-  </div>
-
-  <div class="stat-card-row" style="margin-top:16px;">
-    <div class="stat-card">
-      <div class="stat-circle green">&#128176;</div>
-      <div class="stat-l">Total earned</div>
-      <div class="stat-v" id="profileTotalEarned">$0.00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-circle blue">&#128065;</div>
-      <div class="stat-l">Ads watched</div>
-      <div class="stat-v" id="profileTotalAds">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-circle purple">&#128101;</div>
-      <div class="stat-l">Referrals</div>
-      <div class="stat-v" id="profileReferrals">0</div>
-    </div>
-  </div>
-
-  <div class="row-card">
-    <div class="row-icon gift">&#128293;</div>
-    <div class="row-body">
-      <div class="row-title">Check-in streak</div>
-      <div class="row-sub" id="profileStreak">0 days</div>
-    </div>
-  </div>
-
-  <div class="row-card">
-    <div class="row-icon ref">&#128179;</div>
-    <div class="row-body">
-      <div class="row-title">Available balance</div>
-      <div class="row-sub" id="profileBalance">$0.000</div>
-    </div>
-    <button class="row-btn" id="profileWithdrawBtn">Withdraw &rsaquo;</button>
-  </div>
-</div>
-
-<div class="bottom-nav">
-  <button class="nav-item active" data-page="home"><span class="ic">&#127968;</span>Home</button>
-  <button class="nav-item" data-page="earn"><span class="ic">&#9654;</span>Earn</button>
-  <button class="nav-item" data-page="referrals"><span class="ic">&#128101;</span>Referrals</button>
-  <button class="nav-item" data-page="withdraw"><span class="ic">&#128179;</span>Withdraw</button>
-  <button class="nav-item" data-page="profile"><span class="ic">&#128100;</span>Profile</button>
-</div>
-
-<!-- Withdraw sheet -->
-<div class="overlay" id="withdrawOverlay">
-  <div class="sheet">
-    <h3>Withdraw funds</h3>
-    <div class="desc">Minimum withdrawal is $0.250. Requests are reviewed and paid out manually for now.</div>
-    <label class="field-label">TON wallet address</label>
-    <input class="field-input" id="walletInput" placeholder="UQ...">
-    <label class="field-label">Amount (USD)</label>
-    <input class="field-input" id="amountInput" placeholder="1.000" inputmode="decimal">
-    <div class="field-error" id="withdrawError"></div>
-    <div class="sheet-btns">
-      <button class="btn-secondary" id="withdrawCancel">Cancel</button>
-      <button class="btn-primary-small" id="withdrawSubmit">Request</button>
-    </div>
-  </div>
-</div>
-
-<!-- Refer sheet -->
-<div class="overlay" id="referOverlay">
-  <div class="sheet">
-    <h3>Invite &amp; earn</h3>
-    <div class="desc">Share your link. Referral rewards are credited once a friend joins through it.</div>
-    <div class="link-box" id="referralLink">Loading your link…</div>
-    <div class="sheet-btns">
-      <button class="btn-secondary" id="referCancel">Close</button>
-      <button class="btn-primary-small" id="referShare">Share link</button>
-    </div>
-  </div>
-</div>
-
-<!-- Notifications sheet -->
-<div class="overlay" id="notifOverlay">
-  <div class="sheet">
-    <h3>Notifications</h3>
-    <div class="desc">Updates from EarnWave</div>
-    <div id="notifList"></div>
-    <div class="sheet-btns" style="margin-top:16px;">
-      <button class="btn-secondary" id="notifClose" style="flex:1;">Close</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  const tg = window.Telegram?.WebApp;
-  if (tg) { tg.ready(); tg.expand(); }
-
-  const BLOCK_ID = "46468";
-  const BOT_USERNAME = "EarnWave2009_bot";
-  const REWARD_PER_AD = 0.005;
-  const CHECKIN_REWARD = 0.01;
-  const DAILY_AD_LIMIT = 50;
-  const SEGMENT_COUNT = 10;
-  const MIN_WITHDRAWAL = 0.25;
-  const API_BASE = ""; // same origin — this page and the API live on the same server
-
-  const userId = tg?.initDataUnsafe?.user?.id || "guest";
-  const userName = tg?.initDataUnsafe?.user?.first_name || "Telegram user";
-
-  let state = {
-    balance: 0, totalEarned: 0, adsToday: 0,
-    checkinStreak: 0, lastCheckinDate: "",
-    referralCount: 0, history: []
-  };
-
-  const el = (id) => document.getElementById(id);
-  const todayStr = () => new Date().toISOString().slice(0, 10);
-
-  async function api(path, options) {
-    const res = await fetch(API_BASE + path, options);
-    return res.json();
-  }
-
-  function buildSegments() {
-    const row = el('segmentRow');
-    row.innerHTML = '';
-    for (let i = 0; i < SEGMENT_COUNT; i++) {
-      const s = document.createElement('div');
-      s.className = 'segment';
-      row.appendChild(s);
-    }
-  }
-
-  function render() {
-    el('balanceDisplay').textContent = '$' + state.balance.toFixed(3);
-    el('todayEarnedDisplay').textContent = '$' + (state.adsToday * REWARD_PER_AD).toFixed(3);
-    el('adCountTodayDisplay').textContent = state.adsToday;
-    el('totalAdsDisplay').textContent = state.history.filter(h => h.type === 'ad').length;
-    el('totalEarnedDisplay').textContent = '$' + state.totalEarned.toFixed(2);
-    el('referralCountDisplay').textContent = state.referralCount;
-    el('referralsPageSub').textContent = state.referralCount + ' friends joined so far. Tap Invite on Home to share your link.';
-    el('profileUserDisplay').textContent = userName;
-    el('profileUserIdDisplay').textContent = 'ID ' + userId;
-    el('profileTotalEarned').textContent = '$' + state.totalEarned.toFixed(2);
-    el('profileTotalAds').textContent = state.history.filter(h => h.type === 'ad').length;
-    el('profileReferrals').textContent = state.referralCount;
-    el('profileStreak').textContent = state.checkinStreak + (state.checkinStreak === 1 ? ' day' : ' days');
-    el('profileBalance').textContent = '$' + state.balance.toFixed(3);
-
-    el('segmentLabel').textContent = state.adsToday + ' / ' + DAILY_AD_LIMIT + ' ads today';
-    const filled = Math.round((state.adsToday / DAILY_AD_LIMIT) * SEGMENT_COUNT);
-    document.querySelectorAll('#segmentRow .segment').forEach((s, i) => {
-      s.classList.toggle('filled', i < filled);
-    });
-
-    const watchBtn = el('watchBtn');
-    if (state.adsToday >= DAILY_AD_LIMIT) {
-      watchBtn.disabled = true;
-      watchBtn.querySelector('.t').textContent = 'Daily limit reached';
-      watchBtn.querySelector('.s').textContent = 'Come back tomorrow';
-    } else {
-      watchBtn.disabled = false;
-      watchBtn.querySelector('.t').textContent = 'Watch ad';
-      watchBtn.querySelector('.s').textContent = 'Earn $' + REWARD_PER_AD.toFixed(3) + ' per ad';
-    }
-
-    const checkedInToday = state.lastCheckinDate === todayStr();
-    el('checkinTitle').textContent = checkedInToday ? 'Checked in today' : 'Daily bonus';
-    el('checkinSub').textContent = checkedInToday
-      ? 'Come back tomorrow \u2014 streak: ' + state.checkinStreak
-      : 'Come back every day and claim your bonus.';
-    el('checkinBtn').disabled = checkedInToday;
-    el('checkinBtn').textContent = checkedInToday ? 'Claimed' : 'Claim $' + CHECKIN_REWARD.toFixed(2) + ' \u203a';
-
-    const list = el('historyList');
-    if (state.history.length === 0) {
-      list.innerHTML = '<div class="log-empty">No recent earnings yet</div>';
-    } else {
-      list.innerHTML = state.history.slice(0, 15).map(h => {
-        const isNeg = h.amount < 0;
-        const iconChar = isNeg ? '\u2193' : (h.type === 'checkin' ? '\u2713' : (h.type === 'referral' ? 'R' : '$'));
-        const time = h.created_at ? h.created_at.slice(11, 16) : '';
-        return `<div class="log-item">
-          <span class="log-left"><span class="log-icon ${isNeg ? 'neg' : ''}">${iconChar}</span>${h.label}</span>
-          <span><span class="log-amt ${isNeg ? 'neg' : ''}">${isNeg ? '-' : '+'}$${Math.abs(h.amount).toFixed(3)}</span><span class="log-time">${time}</span></span>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  function bumpBalance() {
-    const b = el('balanceDisplay');
-    b.classList.add('bump');
-    setTimeout(() => b.classList.remove('bump'), 250);
-  }
-
-  async function loadState() {
-    try {
-      const data = await api('/api/user/' + userId);
-      state.balance = data.balance;
-      state.totalEarned = data.total_earned;
-      state.adsToday = data.ads_today;
-      state.checkinStreak = data.checkin_streak;
-      state.lastCheckinDate = data.last_checkin_date;
-      state.referralCount = data.referral_count;
-      state.history = data.activity;
-    } catch (e) {
-      setStatus('Could not reach the server. Check your connection.', 'error');
-    }
-    render();
-  }
-
-  function setStatus(text, type) {
-    el('statusMsg').textContent = text;
-    el('statusMsg').className = 'status' + (type ? ' ' + type : '');
-  }
-
-  // Ad SDK (Monetag)
-  el('retryAdBtn').addEventListener('click', () => {
-    el('adErrorBanner').style.display = 'none';
-  });
-
-  el('watchBtn').addEventListener('click', () => {
-    if (state.adsToday >= DAILY_AD_LIMIT) return;
-    if (typeof show_11739907 !== 'function') { el('adErrorBanner').style.display = 'flex'; return; }
-    el('watchBtn').disabled = true;
-    setStatus('Loading ad\u2026');
-    show_11739907({ ymid: String(userId) })
-      .then(async () => {
-        // Monetag calls /api/reward server-side via postback on completion. Give it
-        // a moment to land before refetching, so the balance shown is accurate.
-        await new Promise(r => setTimeout(r, 1200));
-        await loadState();
-        bumpBalance();
-        setStatus('Ad watched \u2014 reward added!', 'success');
-      })
-      .catch(() => setStatus('Ad was skipped or failed. No reward given.', 'error'))
-      .finally(() => { render(); });
-  });
-
-  // Daily check-in
-  el('checkinBtn').addEventListener('click', async () => {
-    if (state.lastCheckinDate === todayStr()) return;
-    try {
-      const result = await api('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
-      });
-      if (result.error) { setStatus(result.error, 'error'); return; }
-      await loadState();
-      bumpBalance();
-      setStatus('Daily bonus claimed!', 'success');
-    } catch (e) {
-      setStatus('Could not reach the server.', 'error');
-    }
-  });
-
-  // Withdraw
-  function openWithdraw() { el('withdrawOverlay').classList.add('show'); }
-  el('withdrawPillBtn').addEventListener('click', openWithdraw);
-  el('withdrawCancel').addEventListener('click', () => el('withdrawOverlay').classList.remove('show'));
-  el('withdrawSubmit').addEventListener('click', async () => {
-    const wallet = el('walletInput').value.trim();
-    const amount = parseFloat(el('amountInput').value);
-    const errEl = el('withdrawError');
-    if (!wallet || wallet.length < 6) { errEl.textContent = 'Enter a valid wallet address'; errEl.classList.add('show'); return; }
-    if (!amount || amount < MIN_WITHDRAWAL) { errEl.textContent = 'Minimum withdrawal is $' + MIN_WITHDRAWAL.toFixed(3); errEl.classList.add('show'); return; }
-    if (amount > state.balance) { errEl.textContent = 'Amount exceeds your available balance'; errEl.classList.add('show'); return; }
-    errEl.classList.remove('show');
-
-    try {
-      const result = await api('/api/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, wallet, amount })
-      });
-      if (result.error) { errEl.textContent = result.error; errEl.classList.add('show'); return; }
-      await loadState();
-      el('withdrawOverlay').classList.remove('show');
-      el('walletInput').value = ''; el('amountInput').value = '';
-      setStatus('Withdrawal request submitted', 'success');
-    } catch (e) {
-      errEl.textContent = 'Could not reach the server.'; errEl.classList.add('show');
-    }
-  });
-  ['walletInput', 'amountInput'].forEach(id => el(id).addEventListener('input', () => el('withdrawError').classList.remove('show')));
-
-  // Refer
-  function openRefer() {
-    const link = 'https://t.me/' + BOT_USERNAME + '?start=ref_' + userId;
-    el('referralLink').textContent = link;
-    el('referOverlay').classList.add('show');
-  }
-  el('inviteBtn').addEventListener('click', openRefer);
-  el('referCancel').addEventListener('click', () => el('referOverlay').classList.remove('show'));
-  el('referShare').addEventListener('click', () => {
-    const link = el('referralLink').textContent;
-    const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Join EarnWave and start earning \u2014 watch ads, get paid.');
-    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl); else window.open(shareUrl, '_blank');
-  });
-
-  // Notifications
-  const notifications = [
-    { t: 'Welcome to EarnWave', d: 'Watch ads and earn \u2014 check in daily for bonus rewards.' },
-    { t: 'Withdrawals', d: 'Requests are reviewed manually while we set up automated payouts.' }
-  ];
-  el('bellBtn').addEventListener('click', () => {
-    el('notifList').innerHTML = notifications.map(n => `<div class="notif-item"><div class="t">${n.t}</div><div class="d">${n.d}</div></div>`).join('');
-    el('bellDot').classList.remove('show');
-    el('notifOverlay').classList.add('show');
-  });
-  el('notifClose').addEventListener('click', () => el('notifOverlay').classList.remove('show'));
-  el('profileBtn').addEventListener('click', () => switchPage('profile'));
-  el('profileWithdrawBtn').addEventListener('click', openWithdraw);
-
-  document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('show'); }));
-
-  el('viewAllBtn').addEventListener('click', () => switchPage('home'));
-
-  // Nav switching
-  function switchPage(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    el('page-' + name).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === name));
-  }
-  document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      switchPage(btn.dataset.page);
-      if (btn.dataset.page === 'withdraw') openWithdraw();
-      if (btn.dataset.page === 'referrals') openRefer();
-    });
-  });
-
-  buildSegments();
-  loadState();
-</script>
-
+        // Silent Ad Trigger Integration Hook
+        document.getElementById('watchVideoBtn').addEventListener('click', () => {
+            // Placeholder: Call your invisible Adsgram controller here
+            // Example: adController.show().then(() => { /* update balance */ });
+            alert("Triggering bonus video stream...");
+        });
+    </script>
 </body>
 </html>
