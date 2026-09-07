@@ -195,18 +195,18 @@
 
     <div class="card">
         <h3><i class="fa-solid fa-shield-halved"></i> Recent Network Payouts</h3>
-        <div id="liveTicker" style="font-size: 13px; color: var(--text-gray); min-height: 40px; display: flex; flex-init: column; justify-content: center;">
+        <div id="liveTicker" style="font-size: 13px; color: var(--text-gray); min-height: 40px; display: flex; flex-direction: column; justify-content: center;">
             Loading live network transactions...
         </div>
     </div>
 
     <div class="nav-bar">
         <button class="nav-item active"><i class="fa-solid fa-house"></i> Home</button>
-        <button class="nav-item" onclick="alert('Referral system active via Telegram bot links!')"><i class="fa-solid fa-users"></i> Referrals</button>
+        <button class="nav-item" id="refNavBtn"><i class="fa-solid fa-users"></i> Referrals</button>
     </div>
 
-    <!-- Monetag SDK script insertion placeholder (Replace YOUR_ZONE_ID with your actual tag script/zone) -->
-    <script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_ZONE_ID" async data-sdk="show_YOUR_ZONE_ID"></script>
+    <!-- Monetag Telegram Mini App Script with Zone ID 11739907 -->
+    <script src="https://alwingulla.com/88/tag.min.js" data-zone="11739907" async data-sdk="show_11739907"></script>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -215,6 +215,8 @@
         const userId = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) 
             ? String(tg.initDataUnsafe.user.id) 
             : "7548212601";
+
+        let userRefLink = "";
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('username').innerHTML = `<i class="fa-solid fa-bolt"></i> ${tg.initDataUnsafe.user.first_name || "EarnWave"}`;
@@ -228,19 +230,31 @@
                     document.getElementById('todayEarnings').innerHTML = `<i class="fa-solid fa-chart-line"></i> Total earned: $${data.total_earned.toFixed(3)}`;
                     document.getElementById('adsCount').innerHTML = `<i class="fa-solid fa-tv"></i> Ads watched: ${data.ads_today}/${data.daily_limit}`;
                     document.getElementById('streakText').innerText = `Streak: ${data.checkin_streak} days`;
+                    userRefLink = data.referral_link;
                 })
                 .catch(err => console.error("Error loading user data:", err));
         }
 
         loadUserData();
-        setInterval(loadUserData, 5000); // Auto-syncs balance when S2S postback hits backend
+        setInterval(loadUserData, 5000);
 
-        // Monetag Ad Handler triggering the global function provided by your tag script
-        document.getElementById('watchVideoBtn').addEventListener('click', () => {
-            if (typeof show_YOUR_ZONE_ID === 'function') {
-                show_YOUR_ZONE_ID().catch(err => console.log("Ad display error:", err));
+        // Referral link popup action
+        document.getElementById('refNavBtn').addEventListener('click', () => {
+            if (userRefLink) {
+                prompt("Copy your personal referral link and share with friends:", userRefLink);
             } else {
-                alert("Ad network is loading or Zone ID is misconfigured. Make sure your Monetag Zone script is fully loaded.");
+                alert("Loading referral link, please try again in a moment.");
+            }
+        });
+
+        // Monetag Ad Trigger (Zone ID: 11739907)
+        document.getElementById('watchVideoBtn').addEventListener('click', () => {
+            if (typeof show_11739907 === 'function') {
+                show_11739907().then(() => {
+                    console.log("Ad finished watching");
+                }).catch(err => console.log("Ad display error:", err));
+            } else {
+                alert("Ad network script is still loading. Please wait a moment.");
             }
         });
 
