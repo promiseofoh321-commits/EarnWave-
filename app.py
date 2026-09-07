@@ -19,7 +19,7 @@ DAILY_AD_LIMIT = 50
 MIN_WITHDRAWAL = 0.25
 
 
-# ---------- Database ----------
+# ---------- Database Setup ----------
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -86,14 +86,14 @@ def log_activity(user_id, label, amount, type_):
     conn.close()
 
 
-# ---------- Mini App page ----------
+# ---------- Mini App Page ----------
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# ---------- API ----------
+# ---------- API Endpoints ----------
 
 @app.route("/api/user/<user_id>", methods=["GET"])
 def get_user(user_id):
@@ -118,10 +118,8 @@ def get_user(user_id):
 
 
 @app.route("/api/reward", methods=["GET", "POST"])
-def adsgram_reward():
-    """Called by the ad network when a user finishes a rewarded ad.
-    Accepts both 'userId' (Adsgram-style) and 'user_id' (Monetag-style) params.
-    """
+def ads_reward():
+    """Triggered when a user completes a rewarded ad view."""
     user_id = (
         request.args.get("userId")
         or request.args.get("user_id")
@@ -130,12 +128,6 @@ def adsgram_reward():
     )
     if not user_id:
         return jsonify({"error": "missing userId"}), 400
-
-    # Monetag sends event=impression&reward=valued for a real, paid ad view.
-    # If reward info is present and says it's not valid, skip crediting.
-    reward_status = request.args.get("reward")
-    if reward_status and reward_status not in ("valued", "yes", "true"):
-        return jsonify({"status": "ignored", "reason": "reward not valued"}), 200
 
     user = get_or_create_user(user_id)
     user = reset_daily_if_needed(user_id, user)
@@ -150,8 +142,9 @@ def adsgram_reward():
     )
     conn.commit()
     conn.close()
+    
     log_activity(user_id, "Ad reward", REWARD_PER_AD, "ad")
-    send_message(ADMIN_ID, f"\U0001F4FA Ad watched by user {user_id} \u2014 +${REWARD_PER_AD:.3f}")
+    send_message(ADMIN_ID, f"📺 Ad watched by user {user_id} — +${REWARD_PER_AD:.3f}")
     return jsonify({"status": "ok", "reward": REWARD_PER_AD})
 
 
@@ -177,8 +170,9 @@ def daily_checkin():
     )
     conn.commit()
     conn.close()
+    
     log_activity(user_id, "Daily check-in", CHECKIN_REWARD, "checkin")
-    send_message(ADMIN_ID, f"\U0001F4C5 Check-in by user {user_id} \u2014 streak: {streak}")
+    send_message(ADMIN_ID, f"📅 Check-in by user {user_id} — streak: {streak}")
     return jsonify({"status": "ok", "reward": CHECKIN_REWARD, "streak": streak})
 
 
@@ -203,10 +197,11 @@ def request_withdrawal():
     conn.execute("UPDATE users SET balance = balance - ? WHERE user_id = ?", (amount, user_id))
     conn.commit()
     conn.close()
+    
     log_activity(user_id, f"Withdrawal requested to {wallet}", -amount, "withdraw")
     send_message(
         ADMIN_ID,
-        f"\U0001F4B8 Withdrawal request!\nUser: {user_id}\nAmount: ${amount:.3f}\nWallet: {wallet}"
+        f"💸 Withdrawal request!\nUser: {user_id}\nAmount: ${amount:.3f}\nWallet: {wallet}"
     )
     return jsonify({"status": "ok"})
 
@@ -232,17 +227,13 @@ def register_referral():
     conn.execute("UPDATE users SET referral_count = referral_count + 1 WHERE user_id = ?", (referrer_id,))
     conn.commit()
     conn.close()
+    
     log_activity(referrer_id, f"Referral joined: {new_user_name}", 0, "referral")
-
-    send_message(
-        referrer_id,
-        f"\U0001F389 {new_user_name} just joined EarnWave using your referral link!"
-    )
-
+    send_message(referrer_id, f"🎉 {new_user_name} just joined EarnWave using your referral link!")
     return jsonify({"status": "ok"})
 
 
-# ---------- Telegram bot webhook ----------
+# ---------- Telegram Bot Webhook ----------
 
 def send_message(chat_id, text, reply_markup=None):
     payload = {"chat_id": chat_id, "text": text}
@@ -282,7 +273,7 @@ def bot_webhook():
             except requests.RequestException:
                 logging.warning("Failed to register referral")
 
-        webapp_url = request.url_root  # same domain serves the Mini App at "/"
+        webapp_url = request.url_root
         reply_markup = {
             "inline_keyboard": [[
                 {"text": "Open EarnWave", "web_app": {"url": webapp_url}}
@@ -292,7 +283,7 @@ def bot_webhook():
         send_message(
             chat_id,
             f"Welcome to EarnWave, {first_name}!\n\n"
-            "Watch ads, earn small crypto rewards, and cash out once you hit the minimum.\n\n"
+            "Watch ads, earn rewards, and cash out once you hit the minimum balance.\n\n"
             "Tap below to open the app.",
             reply_markup=reply_markup,
         )
@@ -302,7 +293,6 @@ def bot_webhook():
 
 @app.route("/set-webhook")
 def set_webhook():
-    """Visit this URL once after deploying to register the bot webhook."""
     webhook_url = request.url_root + "bot-webhook"
     resp = requests.get(f"{TELEGRAM_API}/setWebhook", params={"url": webhook_url})
     return jsonify(resp.json())
