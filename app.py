@@ -11,6 +11,7 @@ app = Flask(__name__)
 DB_PATH = os.environ.get("DB_PATH", "earnwave.db")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+ADMIN_ID = os.environ.get("ADMIN_ID", "7548212601")
 
 REWARD_PER_AD = 0.005
 CHECKIN_REWARD = 0.01
@@ -150,6 +151,7 @@ def adsgram_reward():
     conn.commit()
     conn.close()
     log_activity(user_id, "Ad reward", REWARD_PER_AD, "ad")
+    send_message(ADMIN_ID, f"\U0001F4FA Ad watched by user {user_id} \u2014 +${REWARD_PER_AD:.3f}")
     return jsonify({"status": "ok", "reward": REWARD_PER_AD})
 
 
@@ -176,6 +178,7 @@ def daily_checkin():
     conn.commit()
     conn.close()
     log_activity(user_id, "Daily check-in", CHECKIN_REWARD, "checkin")
+    send_message(ADMIN_ID, f"\U0001F4C5 Check-in by user {user_id} \u2014 streak: {streak}")
     return jsonify({"status": "ok", "reward": CHECKIN_REWARD, "streak": streak})
 
 
@@ -201,6 +204,10 @@ def request_withdrawal():
     conn.commit()
     conn.close()
     log_activity(user_id, f"Withdrawal requested to {wallet}", -amount, "withdraw")
+    send_message(
+        ADMIN_ID,
+        f"\U0001F4B8 Withdrawal request!\nUser: {user_id}\nAmount: ${amount:.3f}\nWallet: {wallet}"
+    )
     return jsonify({"status": "ok"})
 
 
@@ -209,6 +216,7 @@ def register_referral():
     data = request.get_json(force=True)
     new_user_id = str(data.get("user_id", ""))
     referrer_id = str(data.get("referrer_id", ""))
+    new_user_name = data.get("new_user_name", "Someone")
 
     if not new_user_id or not referrer_id or new_user_id == referrer_id:
         return jsonify({"error": "invalid referral"}), 400
@@ -224,7 +232,13 @@ def register_referral():
     conn.execute("UPDATE users SET referral_count = referral_count + 1 WHERE user_id = ?", (referrer_id,))
     conn.commit()
     conn.close()
-    log_activity(referrer_id, "Referral joined", 0, "referral")
+    log_activity(referrer_id, f"Referral joined: {new_user_name}", 0, "referral")
+
+    send_message(
+        referrer_id,
+        f"\U0001F389 {new_user_name} just joined EarnWave using your referral link!"
+    )
+
     return jsonify({"status": "ok"})
 
 
@@ -258,7 +272,11 @@ def bot_webhook():
             try:
                 requests.post(
                     request.url_root + "api/register_referral",
-                    json={"user_id": str(user["id"]), "referrer_id": referrer_id},
+                    json={
+                        "user_id": str(user["id"]),
+                        "referrer_id": referrer_id,
+                        "new_user_name": user.get("first_name", "Someone"),
+                    },
                     timeout=5,
                 )
             except requests.RequestException:
