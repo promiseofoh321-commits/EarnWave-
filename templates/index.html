@@ -228,33 +228,30 @@
 
         loadUserData();
 
+        // Strict Verified Monetag Ad Trigger Hook
         document.getElementById('watchVideoBtn').addEventListener('click', () => {
             if (typeof show_YOUR_ZONE_ID === 'function') {
-                show_YOUR_ZONE_ID().then(() => {
-                    fetch(`/api/reward?user_id=${userId}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.status === "ok") {
-                                loadUserData();
-                                alert("Reward credited successfully!");
-                            } else {
-                                alert(data.error || "Ad limit reached or error processing reward.");
-                            }
-                        });
+                show_YOUR_ZONE_ID().then((result) => {
+                    if (result === true || result) {
+                        fetch(`/api/reward?user_id=${userId}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === "ok") {
+                                    loadUserData();
+                                    alert("Reward credited successfully!");
+                                } else {
+                                    alert(data.error || "Ad limit reached.");
+                                }
+                            });
+                    } else {
+                        alert("Ad was closed before completion. No reward given.");
+                    }
                 }).catch((error) => {
-                    console.log("Ad skipped or failed:", error);
+                    console.log("Ad error:", error);
+                    alert("Ad failed to load or was skipped.");
                 });
             } else {
-                fetch(`/api/reward?user_id=${userId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === "ok") {
-                            loadUserData();
-                            alert("Bonus credited!");
-                        } else {
-                            alert(data.error || "Daily limit reached.");
-                        }
-                    });
+                alert("Ad network is still loading or Zone ID is invalid. Please check configuration.");
             }
         });
 
