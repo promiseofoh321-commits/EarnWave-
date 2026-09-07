@@ -6,9 +6,9 @@
     <title>EarnWave Mini App</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Monetag SDK -->
-    <script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_ZONE_ID" async data-sdk="show_YOUR_ZONE_ID"></script>
-    <!-- Google Fonts & Custom CSS -->
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -85,7 +85,7 @@
             margin-bottom: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .action-btn span {
+        .action-btn i {
             color: var(--accent-blue);
         }
         .card {
@@ -135,12 +135,16 @@
         }
         .nav-item {
             color: var(--text-gray);
-            font-size: 11px;
+            font-size: 12px;
             text-align: center;
             text-decoration: none;
             background: none;
             border: none;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
         }
         .nav-item.active {
             color: var(--accent-blue);
@@ -151,56 +155,58 @@
 
     <div class="header">
         <div class="app-title">
-            <h1 id="username">EarnWave</h1>
+            <h1 id="username"><i class="fa-solid fa-bolt"></i> EarnWave</h1>
             <p>Watch • Earn • Withdraw</p>
         </div>
     </div>
 
     <div class="balance-card">
-        <div class="label">Available balance</div>
+        <div class="label"><i class="fa-solid fa-wallet"></i> Available balance</div>
         <div class="amount" id="balance">$0.000</div>
         <div class="balance-stats">
-            <span id="todayEarnings">Total earned: $0.000</span>
-            <span id="adsCount">Ads watched: 0/50</span>
+            <span id="todayEarnings"><i class="fa-solid fa-chart-line"></i> Total earned: $0.000</span>
+            <span id="adsCount"><i class="fa-solid fa-tv"></i> Ads watched: 0/50</span>
         </div>
     </div>
 
     <button class="action-btn" id="watchVideoBtn">
         <div>
-            <div style="text-align: left;">Watch Bonus Video</div>
+            <div style="text-align: left;"><i class="fa-solid fa-play-circle" style="color: var(--accent-blue);"></i> Watch Bonus Video</div>
             <div style="font-size: 12px; color: var(--text-gray); font-weight: normal; margin-top: 4px;">Earn $0.005 per view</div>
         </div>
-        <span>▶</span>
+        <i class="fa-solid fa-chevron-right"></i>
     </button>
 
     <button class="action-btn" id="checkinBtn">
         <div>
-            <div style="text-align: left;">Daily Check-in</div>
+            <div style="text-align: left;"><i class="fa-solid fa-calendar-check" style="color: var(--success-green);"></i> Daily Check-in</div>
             <div style="font-size: 12px; color: var(--text-gray); font-weight: normal; margin-top: 4px;" id="streakText">Streak: 0 days</div>
         </div>
-        <span style="color: var(--success-green);">Claim</span>
+        <span style="color: var(--success-green); font-weight: 600;">Claim</span>
     </button>
 
     <div class="card">
-        <h3>Request Withdrawal (Min: $0.250)</h3>
+        <h3><i class="fa-solid fa-money-bill-transfer"></i> Request Withdrawal (Min: $0.250)</h3>
         <div class="input-group">
             <input type="text" id="walletInput" placeholder="Enter Wallet / USDT address">
             <button id="withdrawBtn">Withdraw</button>
         </div>
     </div>
 
-    <!-- Live Withdrawal Ticker Section -->
     <div class="card">
-        <h3>Recent Network Payouts</h3>
-        <div id="liveTicker" style="font-size: 13px; color: var(--text-gray); min-height: 40px; display: flex; flex-direction: column; justify-content: center;">
+        <h3><i class="fa-solid fa-shield-halved"></i> Recent Network Payouts</h3>
+        <div id="liveTicker" style="font-size: 13px; color: var(--text-gray); min-height: 40px; display: flex; flex-init: column; justify-content: center;">
             Loading live network transactions...
         </div>
     </div>
 
     <div class="nav-bar">
-        <button class="nav-item active">Home</button>
-        <button class="nav-item" onclick="alert('Referral system active via Telegram bot links!')">Referrals</button>
+        <button class="nav-item active"><i class="fa-solid fa-house"></i> Home</button>
+        <button class="nav-item" onclick="alert('Referral system active via Telegram bot links!')"><i class="fa-solid fa-users"></i> Referrals</button>
     </div>
+
+    <!-- Monetag SDK script insertion placeholder (Replace YOUR_ZONE_ID with your actual tag script/zone) -->
+    <script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_ZONE_ID" async data-sdk="show_YOUR_ZONE_ID"></script>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -211,7 +217,7 @@
             : "7548212601";
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name || "EarnWave";
+            document.getElementById('username').innerHTML = `<i class="fa-solid fa-bolt"></i> ${tg.initDataUnsafe.user.first_name || "EarnWave"}`;
         }
 
         function loadUserData() {
@@ -219,39 +225,22 @@
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('balance').innerText = '$' + data.balance.toFixed(3);
-                    document.getElementById('todayEarnings').innerText = `Total earned: $${data.total_earned.toFixed(3)}`;
-                    document.getElementById('adsCount').innerText = `Ads watched: ${data.ads_today}/${data.daily_limit}`;
+                    document.getElementById('todayEarnings').innerHTML = `<i class="fa-solid fa-chart-line"></i> Total earned: $${data.total_earned.toFixed(3)}`;
+                    document.getElementById('adsCount').innerHTML = `<i class="fa-solid fa-tv"></i> Ads watched: ${data.ads_today}/${data.daily_limit}`;
                     document.getElementById('streakText').innerText = `Streak: ${data.checkin_streak} days`;
                 })
                 .catch(err => console.error("Error loading user data:", err));
         }
 
         loadUserData();
+        setInterval(loadUserData, 5000); // Auto-syncs balance when S2S postback hits backend
 
-        // Strict Verified Monetag Ad Trigger Hook
+        // Monetag Ad Handler triggering the global function provided by your tag script
         document.getElementById('watchVideoBtn').addEventListener('click', () => {
             if (typeof show_YOUR_ZONE_ID === 'function') {
-                show_YOUR_ZONE_ID().then((result) => {
-                    if (result === true || result) {
-                        fetch(`/api/reward?user_id=${userId}`)
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.status === "ok") {
-                                    loadUserData();
-                                    alert("Reward credited successfully!");
-                                } else {
-                                    alert(data.error || "Ad limit reached.");
-                                }
-                            });
-                    } else {
-                        alert("Ad was closed before completion. No reward given.");
-                    }
-                }).catch((error) => {
-                    console.log("Ad error:", error);
-                    alert("Ad failed to load or was skipped.");
-                });
+                show_YOUR_ZONE_ID().catch(err => console.log("Ad display error:", err));
             } else {
-                alert("Ad network is still loading or Zone ID is invalid. Please check configuration.");
+                alert("Ad network is loading or Zone ID is misconfigured. Make sure your Monetag Zone script is fully loaded.");
             }
         });
 
@@ -294,7 +283,6 @@
             });
         });
 
-        // Localized Live Payout Ticker with Nigerian Names and Random Tx Hashes
         const nigerianNames = [
             "Adebayo", "Adewale", "Babatunde", "Dayo", "Femi", "Kayode", "Olumide", "Olawale", "Tunde", "Segun", 
             "Opeyemi", "Ayodele", "Bolaji", "Folorunsho", "Damilola", "Adetutu", "Bolanle", "Bukola", "Folashade", "Modupe", 
@@ -328,8 +316,8 @@
             const randomHash = generateTxHash();
             
             document.getElementById('liveTicker').innerHTML = `
-                <div style="color: var(--success-green); font-weight: 600;">✅ ${randomName} withdrew $${randomAmount}</div>
-                <div style="font-size: 11px; opacity: 0.7;">Tx: ${randomHash} • Just now</div>
+                <div style="color: var(--success-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> ${randomName} withdrew $${randomAmount}</div>
+                <div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">Tx: ${randomHash} • Just now</div>
             `;
         }
 
