@@ -1,342 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EarnWave Mini App</title>
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0b132b;
-            --card-bg: #1c2541;
-            --accent-blue: #3a86ff;
-            --text-white: #ffffff;
-            --text-gray: #8d99ae;
-            --success-green: #2ecc71;
-        }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-        }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-white);
-            padding: 16px;
-            padding-bottom: 90px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .app-title h1 {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        .app-title p {
-            font-size: 12px;
-            color: var(--text-gray);
-        }
-        .balance-card {
-            background: linear-gradient(135deg, #3a86ff, #2563eb);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
-        }
-        .balance-card .label {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        .balance-card .amount {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 8px 0 12px 0;
-        }
-        .balance-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            opacity: 0.9;
-            border-top: 1px solid rgba(255,255,255,0.15);
-            padding-top: 10px;
-        }
-        .action-btn {
-            background-color: var(--card-bg);
-            border: none;
-            border-radius: 12px;
-            width: 100%;
-            padding: 16px;
-            color: var(--text-white);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .action-btn i {
-            color: var(--accent-blue);
-        }
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        .card h3 {
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: var(--text-gray);
-        }
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .input-group input {
-            flex: 1;
-            background: #0b132b;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 10px;
-            color: white;
-            font-size: 14px;
-        }
-        .input-group button {
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #080f24;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .nav-item {
-            color: var(--text-gray);
-            font-size: 12px;
-            text-align: center;
-            text-decoration: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: center;
-        }
-        .nav-item.active {
-            color: var(--accent-blue);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EarnWave</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- ===== MONETAG SDK - ZONE 11739907 ===== -->
+  <!-- IMPORTANT: Replace the src below with the exact one from "copy this tag" in Monetag -->
+  <script src="https://your-monetag-domain.com/sdk.js"
+          data-zone="11739907"
+          data-sdk="show_11739907">
+  </script>
+  <!-- ====================================== -->
+
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card2: #2c2c2e;
+      --text: #ffffff;
+      --secondary: #8e8e93;
+      --blue: #0a84ff;
+      --green: #30d158;
+      --purple: #bf5af2;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+      overflow-x: hidden;
+    }
+
+    .container { max-width: 430px; margin: 0 auto; padding: 16px; }
+
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0 20px;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .close-btn, .menu-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--card2); display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--text); border: none; cursor: pointer;
+    }
+
+    .user-info { margin-bottom: 20px; }
+    .user-info h2 { font-size: 22px; font-weight: 700; }
+    .user-info p { color: var(--secondary); font-size: 14px; margin-top: 2px; }
+
+    .balance-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .balance-card .label { color: var(--secondary); font-size: 13px; }
+    .balance-card .amount { font-size: 36px; font-weight: 700; margin: 6px 0 16px; letter-spacing: -1px; }
+    .stats { display: flex; justify-content: space-between; font-size: 13px; }
+    .stats span { color: var(--secondary); }
+    .progress {
+      height: 4px; background: #3a3a3c; border-radius: 2px; margin-top: 12px; overflow: hidden;
+    }
+    .progress-bar { height: 100%; background: var(--blue); width: 0%; transition: width 0.4s; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .action-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .action-card .icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .action-card .title { font-size: 15px; font-weight: 600; }
+    .action-card .desc { font-size: 12px; color: var(--secondary); }
+    .btn {
+      border: none; border-radius: 12px; padding: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-outline { background: transparent; color: var(--blue); padding: 0; text-align: left; }
+
+    .section-title { font-size: 13px; color: var(--secondary); margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .quick-btn {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex; align-items: center; gap: 10px;
+      border: none; color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+
+    .payout-item {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .payout-item .left { display: flex; align-items: center; gap: 12px; }
+    .check { width: 24px; height: 24px; background: #1c3a2a; color: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(28,28,30,0.92);
+      backdrop-filter: blur(20px);
+      border-top: 0.5px solid #3a3a3c;
+      display: flex; justify-content: space-around;
+      padding: 10px 0 24px;
+      max-width: 430px; margin: 0 auto;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      color: var(--secondary); font-size: 11px; background: none; border: none; cursor: pointer;
+    }
+    .nav-item.active { color: var(--blue); }
+    .nav-item span { font-size: 22px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .back-btn {
+      background: none; border: none; color: var(--blue); font-size: 16px;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 20px; cursor: pointer;
+    }
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 13px; color: var(--secondary); margin-bottom: 6px; }
+    .input-group input {
+      width: 100%; background: var(--card); border: none; border-radius: 12px;
+      padding: 14px 16px; color: var(--text); font-size: 16px; outline: none;
+    }
+    .full-btn {
+      width: 100%; background: var(--blue); color: white; border: none;
+      border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .referral-box {
+      background: var(--card); border-radius: 16px; padding: 16px; margin-top: 16px;
+    }
+    .referral-box code {
+      display: block; background: var(--card2); padding: 12px; border-radius: 10px;
+      font-size: 15px; margin: 10px 0; word-break: break-all;
+    }
+    .copy-btn {
+      background: var(--blue); color: white; border: none; border-radius: 10px;
+      padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--card2); color: white; padding: 12px 20px; border-radius: 12px;
+      font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
 </head>
 <body>
+  <div class="container">
 
-    <div class="header">
-        <div class="app-title">
-            <h1 id="username"><i class="fa-solid fa-bolt"></i> EarnWave</h1>
-            <p>Watch • Earn • Withdraw</p>
-        </div>
-    </div>
+    <!-- HOME -->
+    <div id="home" class="page active">
+      <div class="header">
+        <button class="close-btn" onclick="Telegram.WebApp.close()">✕</button>
+        <h1>EarnWave</h1>
+        <button class="menu-btn">•••</button>
+      </div>
 
-    <div class="balance-card">
-        <div class="label"><i class="fa-solid fa-wallet"></i> Available balance</div>
+      <div class="user-info">
+        <h2 id="username">Promzy</h2>
+        <p>Watch • Earn • Withdraw</p>
+      </div>
+
+      <div class="balance-card">
+        <div class="label">Available Balance</div>
         <div class="amount" id="balance">$0.000</div>
-        <div class="balance-stats">
-            <span id="todayEarnings"><i class="fa-solid fa-chart-line"></i> Total earned: $0.000</span>
-            <span id="adsCount"><i class="fa-solid fa-tv"></i> Ads watched: 0/50</span>
+        <div class="stats">
+          <div>Total earned<br><strong id="total-earned">$0.000</strong></div>
+          <div style="text-align:right">Ads watched<br><strong id="ads-watched">0/50</strong></div>
         </div>
+        <div class="progress"><div class="progress-bar" id="progress"></div></div>
+      </div>
+
+      <div class="actions">
+        <div class="action-card">
+          <div class="icon" style="background:#3a1f5e;color:var(--purple)">▶</div>
+          <div class="title">Watch Bonus Video</div>
+          <div class="desc">Earn $0.005 per view</div>
+          <button class="btn btn-outline" onclick="watchAd()">Watch Now</button>
+        </div>
+        <div class="action-card">
+          <div class="icon" style="background:#1c3a2a;color:var(--green)">📅</div>
+          <div class="title">Daily Check-in</div>
+          <div class="desc">Streak: <span id="streak">0</span> days</div>
+          <button class="btn btn-green" onclick="doCheckin()">Claim</button>
+        </div>
+      </div>
+
+      <div class="section-title">Quick Actions</div>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="showPage('withdraw')">
+          <span>💰</span> Withdraw
+        </button>
+        <button class="quick-btn" onclick="showPage('profile')">
+          <span>👤</span> Profile
+        </button>
+      </div>
+
+      <div class="section-title">Recent Network Payouts</div>
+      <div id="payouts-list"></div>
     </div>
 
-    <button class="action-btn" id="watchVideoBtn">
-        <div>
-            <div style="text-align: left;"><i class="fa-solid fa-play-circle" style="color: var(--accent-blue);"></i> Watch Bonus Video</div>
-            <div style="font-size: 12px; color: var(--text-gray); font-weight: normal; margin-top: 4px;">Earn $0.005 per view</div>
+    <!-- WITHDRAW -->
+    <div id="withdraw" class="page">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2 style="margin-bottom:20px;font-size:24px;">Request Withdrawal</h2>
+
+      <div class="balance-card" style="margin-bottom:24px;">
+        <div class="label">Available to withdraw</div>
+        <div class="amount" id="withdraw-balance">$0.000</div>
+        <div class="label">Minimum: $0.250</div>
+      </div>
+
+      <div class="input-group">
+        <label>USDT Wallet Address (TRC20 / BEP20)</label>
+        <input type="text" id="wallet-input" placeholder="Enter your wallet address" />
+      </div>
+
+      <button class="full-btn" onclick="requestWithdraw()">Withdraw</button>
+      <p style="text-align:center;color:var(--secondary);font-size:13px;margin-top:12px;">
+        Secure • Fast • Low Fees
+      </p>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profile" class="page">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2 style="margin-bottom:20px;font-size:24px;">Profile</h2>
+
+      <div class="balance-card">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:56px;height:56px;background:var(--card2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>
+          <div>
+            <div style="font-size:18px;font-weight:600;" id="profile-name">Promzy</div>
+            <div style="color:var(--secondary);font-size:14px;" id="profile-id">ID: —</div>
+          </div>
         </div>
-        <i class="fa-solid fa-chevron-right"></i>
+      </div>
+
+      <div class="section-title">Your Referral Link</div>
+      <div class="referral-box">
+        <div style="font-size:14px;color:var(--secondary);">Share & earn when friends join</div>
+        <code id="referral-link">https://t.me/YourBot?start=XXXX</code>
+        <button class="copy-btn" onclick="copyReferral()">Copy Link</button>
+      </div>
+
+      <div class="section-title" style="margin-top:24px;">Stats</div>
+      <div class="balance-card">
+        <div class="stats">
+          <div>Total Earned<br><strong id="profile-earned">$0.000</strong></div>
+          <div style="text-align:right">Ads Watched<br><strong id="profile-ads">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REFERRALS -->
+    <div id="referrals" class="page">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2 style="margin-bottom:20px;font-size:24px;">Referrals</h2>
+      <div class="balance-card">
+        <p style="color:var(--secondary);">Invite friends and earn rewards when they watch ads.</p>
+        <code id="referral-link-2" style="display:block;margin:16px 0;background:var(--card2);padding:12px;border-radius:10px;"></code>
+        <button class="full-btn" onclick="copyReferral()">Copy Referral Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('home')">
+      <span>🏠</span> Home
     </button>
-
-    <button class="action-btn" id="checkinBtn">
-        <div>
-            <div style="text-align: left;"><i class="fa-solid fa-calendar-check" style="color: var(--success-green);"></i> Daily Check-in</div>
-            <div style="font-size: 12px; color: var(--text-gray); font-weight: normal; margin-top: 4px;" id="streakText">Streak: 0 days</div>
-        </div>
-        <span style="color: var(--success-green); font-weight: 600;">Claim</span>
+    <button class="nav-item" onclick="showPage('referrals')">
+      <span>👥</span> Referrals
     </button>
+    <button class="nav-item" onclick="showPage('profile')">
+      <span>👤</span> Profile
+    </button>
+  </div>
 
-    <div class="card">
-        <h3><i class="fa-solid fa-money-bill-transfer"></i> Request Withdrawal (Min: $0.250)</h3>
-        <div class="input-group">
-            <input type="text" id="walletInput" placeholder="Enter Wallet / USDT address">
-            <button id="withdrawBtn">Withdraw</button>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#000000');
+    tg.setBackgroundColor('#000000');
+
+    let user = null;
+    const tgUser = tg.initDataUnsafe?.user;
+    const telegramId = tgUser?.id ? String(tgUser.id) : "demo_user";
+    const username = tgUser?.username || tgUser?.first_name || "Promzy";
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (pageId === 'home') document.querySelectorAll('.nav-item')[0].classList.add('active');
+      if (pageId === 'referrals') document.querySelectorAll('.nav-item')[1].classList.add('active');
+      if (pageId === 'profile') document.querySelectorAll('.nav-item')[2].classList.add('active');
+
+      if (pageId === 'withdraw' && user) {
+        document.getElementById('withdraw-balance').textContent = `\[ {user.balance.toFixed(3)}`;
+      }
+    }
+
+    function updateUI() {
+      if (!user) return;
+      document.getElementById('username').textContent = user.username;
+      document.getElementById('balance').textContent = ` \]{user.balance.toFixed(3)}`;
+      document.getElementById('total-earned').textContent = `\[ {user.total_earned.toFixed(3)}`;
+      document.getElementById('ads-watched').textContent = `${user.ads_watched}/50`;
+      document.getElementById('progress').style.width = `${Math.min(user.ads_watched / 50 * 100, 100)}%`;
+      document.getElementById('streak').textContent = user.streak;
+
+      document.getElementById('profile-name').textContent = user.username;
+      document.getElementById('profile-id').textContent = `ID: ${user.id}`;
+      document.getElementById('profile-earned').textContent = ` \]{user.total_earned.toFixed(3)}`;
+      document.getElementById('profile-ads').textContent = user.ads_watched;
+
+      const link = `https://t.me/YourBotUsername?start=${user.referral_code}`;
+      document.getElementById('referral-link').textContent = link;
+      document.getElementById('referral-link-2').textContent = link;
+    }
+
+    async function loadUser() {
+      const res = await fetch('/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: telegramId, username })
+      });
+      user = await res.json();
+      updateUI();
+    }
+
+    async function loadPayouts() {
+      const res = await fetch('/api/payouts');
+      const data = await res.json();
+      const list = document.getElementById('payouts-list');
+      list.innerHTML = data.map(p => `
+        <div class="payout-item">
+          <div class="left">
+            <div class="check">✓</div>
+            <div>
+              <div style="font-weight:500">${p.name} withdrew \[ {p.amount}</div>
+              <div style="font-size:12px;color:var(--secondary)">${p.tx}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--secondary)">${p.time}</div>
         </div>
-    </div>
+      `).join('');
+    }
 
-    <div class="card">
-        <h3><i class="fa-solid fa-shield-halved"></i> Recent Network Payouts</h3>
-        <div id="liveTicker" style="font-size: 13px; color: var(--text-gray); min-height: 40px; display: flex; flex-direction: column; justify-content: center;">
-            Loading live network transactions...
-        </div>
-    </div>
+    // ========== FIXED MONETAG FUNCTION ==========
+    async function watchAd() {
+      const btn = event?.currentTarget;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Loading ad...";
+      }
 
-    <div class="nav-bar">
-        <button class="nav-item active"><i class="fa-solid fa-house"></i> Home</button>
-        <button class="nav-item" id="refNavBtn"><i class="fa-solid fa-users"></i> Referrals</button>
-    </div>
-
-    <!-- Monetag Telegram Mini App Script with Zone ID 11739907 -->
-    <script src="https://alwingulla.com/88/tag.min.js" data-zone="11739907" async data-sdk="show_11739907"></script>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const userId = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) 
-            ? String(tg.initDataUnsafe.user.id) 
-            : "7548212601";
-
-        let userRefLink = "";
-
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('username').innerHTML = `<i class="fa-solid fa-bolt"></i> ${tg.initDataUnsafe.user.first_name || "EarnWave"}`;
+      try {
+        if (typeof show_11739907 !== "function") {
+          throw new Error("Monetag SDK not loaded");
         }
 
-        function loadUserData() {
-            fetch(`/api/user/${userId}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('balance').innerText = '$' + data.balance.toFixed(3);
-                    document.getElementById('todayEarnings').innerHTML = `<i class="fa-solid fa-chart-line"></i> Total earned: $${data.total_earned.toFixed(3)}`;
-                    document.getElementById('adsCount').innerHTML = `<i class="fa-solid fa-tv"></i> Ads watched: ${data.ads_today}/${data.daily_limit}`;
-                    document.getElementById('streakText').innerText = `Streak: ${data.checkin_streak} days`;
-                    userRefLink = data.referral_link;
-                })
-                .catch(err => console.error("Error loading user data:", err));
+        // Show the ad
+        await show_11739907({
+          ymid: telegramId + "_" + Date.now()
+        });
+
+        // Ad watched → reward user
+        const res = await fetch("/api/watch-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: telegramId })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          user.balance = data.balance;
+          user.total_earned = data.total_earned;
+          user.ads_watched = data.ads_watched;
+          updateUI();
+          showToast(`+ \]{data.reward.toFixed(3)} earned!`);
         }
 
-        loadUserData();
-        setInterval(loadUserData, 5000);
-
-        // Referral link popup action
-        document.getElementById('refNavBtn').addEventListener('click', () => {
-            if (userRefLink) {
-                prompt("Copy your personal referral link and share with friends:", userRefLink);
-            } else {
-                alert("Loading referral link, please try again in a moment.");
-            }
-        });
-
-        // Monetag Ad Trigger (Zone ID: 11739907)
-        document.getElementById('watchVideoBtn').addEventListener('click', () => {
-            if (typeof show_11739907 === 'function') {
-                show_11739907().then(() => {
-                    console.log("Ad finished watching");
-                }).catch(err => console.log("Ad display error:", err));
-            } else {
-                alert("Ad network script is still loading. Please wait a moment.");
-            }
-        });
-
-        document.getElementById('checkinBtn').addEventListener('click', () => {
-            fetch('/api/checkin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "ok") {
-                    loadUserData();
-                    alert(`Check-in successful! Earned $${data.reward.toFixed(3)} (Streak: ${data.streak})`);
-                } else {
-                    alert(data.error || "Already checked in today.");
-                }
-            });
-        });
-
-        document.getElementById('withdrawBtn').addEventListener('click', () => {
-            const wallet = document.getElementById('walletInput').value;
-            const balanceText = document.getElementById('balance').innerText.replace('$', '');
-            const amount = parseFloat(balanceText);
-
-            fetch('/api/withdraw', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, wallet: wallet, amount: amount })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "ok") {
-                    loadUserData();
-                    document.getElementById('walletInput').value = '';
-                    alert("Withdrawal request submitted successfully!");
-                } else {
-                    alert(data.error || "Withdrawal failed. Check minimum balance.");
-                }
-            });
-        });
-
-        const nigerianNames = [
-            "Adebayo", "Adewale", "Babatunde", "Dayo", "Femi", "Kayode", "Olumide", "Olawale", "Tunde", "Segun", 
-            "Opeyemi", "Ayodele", "Bolaji", "Folorunsho", "Damilola", "Adetutu", "Bolanle", "Bukola", "Folashade", "Modupe", 
-            "Morayo", "Oluwatosin", "Omolara", "Simisola", "Titilayo", "Yetunde", "Yewande", "Temitope", "Funmilayo", "Ibironke", 
-            "Chinedu", "Chukwudi", "Emeka", "Kelechi", "Obinna", "Uche", "Arinze", "Chibuzo", "Ikenna", "Nnamdi", 
-            "Okey", "Tochi", "Chinonso", "Ifeanyi", "Chidi", "Adaora", "Chiamaka", "Chidinma", "Chioma", "Ebele", 
-            "Ngozi", "Nkechi", "Nneka", "Ogechi", "Uchechi", "Amarachi", "Onyinye", "Chinwe", "Akudo", "Kamsi", 
-            "Abubakar", "Aliyu", "Aminu", "Bello", "Faruk", "Garba", "Haruna", "Ibrahim", "Kabir", "Mohammed", 
-            "Sani", "Umar", "Usman", "Yakubu", "Zayyan", "Aisha", "Asmau", "Bilikisu", "Fatima", "Hafsat", 
-            "Halima", "Khadija", "Maryam", "Nafisa", "Rukayya", "Safiya", "Zainab", "Zulaihat", "Jamila", "Hauwa", 
-            "Oghene", "Ejiro", "Okiemute", "Pere", "Toritseju", "Ogaga", "Eseoghene", "Efemena", "Oritsemeyiwa", "Ufuoma", 
-            "Terfa", "Ngodoo", "Mlumun", "Owoicho", "Aondover", "Dooshima", "Tertsea", "Suwaid", "Ojone", "Eje"
-        ];
-
-        function generateTxHash() {
-            const chars = "abcdef0123456789";
-            let hash = "0x";
-            for (let i = 0; i < 8; i++) {
-                hash += chars[Math.floor(Math.random() * chars.length)];
-            }
-            hash += "...";
-            for (let i = 0; i < 4; i++) {
-                hash += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return hash;
+      } catch (err) {
+        console.error("Ad Error:", err);
+        showToast("Ad not available. Try again later");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Watch Now";
         }
+      }
+    }
+    // ============================================
 
-        function updateTicker() {
-            const randomName = nigerianNames[Math.floor(Math.random() * nigerianNames.length)];
-            const randomAmount = (Math.random() * (4.50 - 0.25) + 0.25).toFixed(2);
-            const randomHash = generateTxHash();
-            
-            document.getElementById('liveTicker').innerHTML = `
-                <div style="color: var(--success-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> ${randomName} withdrew $${randomAmount}</div>
-                <div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">Tx: ${randomHash} • Just now</div>
-            `;
-        }
+    async function doCheckin() {
+      const res = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: telegramId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        user.balance = data.balance;
+        user.streak = data.streak;
+        updateUI();
+        showToast(`+\[ {data.reward.toFixed(3)} claimed!`);
+      } else {
+        showToast(data.message);
+      }
+    }
 
-        updateTicker();
-        setInterval(updateTicker, 4000);
-    </script>
+    async function requestWithdraw() {
+      const wallet = document.getElementById('wallet-input').value.trim();
+      const res = await fetch('/api/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: telegramId, wallet })
+      });
+      const data = await res.json();
+      if (data.success) {
+        user.balance = 0;
+        updateUI();
+        showToast(`Withdrawal of \]{data.amount.toFixed(3)} requested!`);
+        showPage('home');
+      } else {
+        showToast(data.message);
+      }
+    }
+
+    function copyReferral() {
+      const link = document.getElementById('referral-link').textContent;
+      navigator.clipboard.writeText(link);
+      showToast('Referral link copied!');
+    }
+
+    // Init
+    loadUser();
+    loadPayouts();
+  </script>
 </body>
 </html>
