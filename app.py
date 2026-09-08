@@ -1,14 +1,15 @@
 import os
-import sqlite3
 import logging
 import requests
 from datetime import date, timedelta
 from flask import Flask, request, jsonify, render_template
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 
-DB_PATH = os.environ.get("DB_PATH", "earnwave.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 ADMIN_ID = os.environ.get("ADMIN_ID", "7548212601")
@@ -22,14 +23,19 @@ MIN_WITHDRAWAL = 0.25
 # ---------- Database ----------
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    # Connects to PostgreSQL using Render's DATABASE_URL
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 
 def init_db():
+    if not DATABASE_URL:
+        logging.warning("DATABASE_URL environment variable is missing!")
+        return
+
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id TEXT PRIMARY KEY,
             balance REAL DEFAULT 0,
@@ -40,29 +46,34 @@ def init_db():
             checkin_streak INTEGER DEFAULT 0,
             referred_by TEXT DEFAULT '',
             referral_count INTEGER DEFAULT 0
-        )
+        );
     """)
-    conn.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS activity (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id TEXT,
             label TEXT,
             amount REAL,
             type TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     conn.commit()
+    cur.close()
     conn.close()
 
 
 def get_or_create_user(user_id):
     conn = get_db()
-    row = conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
     if row is None:
-        conn.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
+        cur.execute("INSERT INTO users (user_id) VALUES (%s)", (user_id,))
         conn.commit()
-        row = conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
+        cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+        row = cur.fetchone()
+    cur.close()
     conn.close()
     return dict(row)
 
@@ -71,8 +82,10 @@ def reset_daily_if_needed(user_id, user):
     today = date.today().isoformat()
     if user["last_ad_date"] != today:
         conn = get_db()
-        conn.execute("UPDATE users SET ads_today = 0, last_ad_date = ? WHERE user_id = ?", (today, user_id))
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET ads_today = 0, last_ad_date = %s WHERE user_id = %s", (today, user_id))
         conn.commit()
+        cur.close()
         conn.close()
         user["ads_today"] = 0
         user["last_ad_date"] = today
@@ -81,8 +94,10 @@ def reset_daily_if_needed(user_id, user):
 
 def log_activity(user_id, label, amount, type_):
     conn = get_db()
-    conn.execute("INSERT INTO activity (user_id, label, amount, type) VALUES (?, ?, ?, ?)", (user_id, label, amount, type_))
+    cur = conn.cursor()
+    cur.execute("INSERT INTO activity (user_id, label, amount, type) VALUES (%s, %s, %s, %s)", (user_id, label, amount, type_))
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -98,10 +113,14 @@ def home():
 @app.route("/api/recent_withdrawals", methods=["GET"])
 def recent_withdrawals():
     conn = get_db()
-    rows = conn.execute(
+    cur = conn.cursor()
+    cur.execute(
         "SELECT user_id, amount, created_at FROM activity WHERE type = 'withdraw' ORDER BY id DESC LIMIT 15"
-    ).fetchall()
+    )
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
+    
     result = []
     for r in rows:
         uid = str(r["user_id"])
@@ -109,7 +128,7 @@ def recent_withdrawals():
         result.append({
             "user": masked,
             "amount": abs(r["amount"]),
-            "created_at": r["created_at"],
+            "created_at": str(r["created_at"]),
         })
     return jsonify({"withdrawals": result})
 
@@ -119,11 +138,22 @@ def get_user(user_id):
     user = get_or_create_user(user_id)
     user = reset_daily_if_needed(user_id, user)
     conn = get_db()
-    activity = conn.execute(
-        "SELECT label, amount, type, created_at FROM activity WHERE user_id = ? ORDER BY id DESC LIMIT 15",
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT label, amount, type, created_at FROM activity WHERE user_id = %s ORDER BY id DESC LIMIT 15",
         (user_id,),
-    ).fetchall()
+    )
+    activity = cur.fetchall()
+    cur.close()
     conn.close()
+    
+    # Format created_at to string for JSON serialization
+    formatted_activity = []
+    for a in activity:
+        item = dict(a)
+        item["created_at"] = str(item["created_at"])
+        formatted_activity.append(item)
+
     return jsonify({
         "balance": user["balance"],
         "total_earned": user["total_earned"],
@@ -132,15 +162,12 @@ def get_user(user_id):
         "checkin_streak": user["checkin_streak"],
         "last_checkin_date": user["last_checkin_date"],
         "referral_count": user["referral_count"],
-        "activity": [dict(a) for a in activity],
+        "activity": formatted_activity,
     })
 
 
 @app.route("/api/reward", methods=["GET", "POST"])
 def adsgram_reward():
-    """Called by the ad network when a user finishes a rewarded ad.
-    Accepts both 'userId' (Adsgram-style) and 'user_id' (Monetag-style) params.
-    """
     user_id = (
         request.args.get("userId")
         or request.args.get("user_id")
@@ -150,8 +177,6 @@ def adsgram_reward():
     if not user_id:
         return jsonify({"error": "missing userId"}), 400
 
-    # Monetag sends event=impression&reward=valued for a real, paid ad view.
-    # If reward info is present and says it's not valid, skip crediting.
     reward_status = request.args.get("reward")
     if reward_status and reward_status not in ("valued", "yes", "true"):
         return jsonify({"status": "ignored", "reason": "reward not valued"}), 200
@@ -163,12 +188,15 @@ def adsgram_reward():
         return jsonify({"error": "daily limit reached"}), 403
 
     conn = get_db()
-    conn.execute(
-        "UPDATE users SET balance = balance + ?, total_earned = total_earned + ?, ads_today = ads_today + 1 WHERE user_id = ?",
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET balance = balance + %s, total_earned = total_earned + %s, ads_today = ads_today + 1 WHERE user_id = %s",
         (REWARD_PER_AD, REWARD_PER_AD, user_id),
     )
     conn.commit()
+    cur.close()
     conn.close()
+    
     log_activity(user_id, "Ad reward", REWARD_PER_AD, "ad")
     send_message(ADMIN_ID, f"\U0001F4FA Ad watched by user {user_id} \u2014 +${REWARD_PER_AD:.3f}")
     return jsonify({"status": "ok", "reward": REWARD_PER_AD})
@@ -190,12 +218,15 @@ def daily_checkin():
     streak = user["checkin_streak"] + 1 if user["last_checkin_date"] == yesterday else 1
 
     conn = get_db()
-    conn.execute(
-        "UPDATE users SET balance = balance + ?, total_earned = total_earned + ?, checkin_streak = ?, last_checkin_date = ? WHERE user_id = ?",
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET balance = balance + %s, total_earned = total_earned + %s, checkin_streak = %s, last_checkin_date = %s WHERE user_id = %s",
         (CHECKIN_REWARD, CHECKIN_REWARD, streak, today, user_id),
     )
     conn.commit()
+    cur.close()
     conn.close()
+    
     log_activity(user_id, "Daily check-in", CHECKIN_REWARD, "checkin")
     send_message(ADMIN_ID, f"\U0001F4C5 Check-in by user {user_id} \u2014 streak: {streak}")
     return jsonify({"status": "ok", "reward": CHECKIN_REWARD, "streak": streak})
@@ -219,9 +250,12 @@ def request_withdrawal():
         return jsonify({"error": "amount exceeds balance"}), 400
 
     conn = get_db()
-    conn.execute("UPDATE users SET balance = balance - ? WHERE user_id = ?", (amount, user_id))
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET balance = balance - %s WHERE user_id = %s", (amount, user_id))
     conn.commit()
+    cur.close()
     conn.close()
+    
     log_activity(user_id, f"Withdrawal requested to {wallet}", -amount, "withdraw")
     send_message(
         ADMIN_ID,
@@ -247,10 +281,13 @@ def register_referral():
     get_or_create_user(referrer_id)
 
     conn = get_db()
-    conn.execute("UPDATE users SET referred_by = ? WHERE user_id = ?", (referrer_id, new_user_id))
-    conn.execute("UPDATE users SET referral_count = referral_count + 1 WHERE user_id = ?", (referrer_id,))
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET referred_by = %s WHERE user_id = %s", (referrer_id, new_user_id))
+    cur.execute("UPDATE users SET referral_count = referral_count + 1 WHERE user_id = %s", (referrer_id,))
     conn.commit()
+    cur.close()
     conn.close()
+    
     log_activity(referrer_id, f"Referral joined: {new_user_name}", 0, "referral")
 
     send_message(
@@ -301,7 +338,7 @@ def bot_webhook():
             except requests.RequestException:
                 logging.warning("Failed to register referral")
 
-        webapp_url = request.url_root  # same domain serves the Mini App at "/"
+        webapp_url = request.url_root
         reply_markup = {
             "inline_keyboard": [[
                 {"text": "Open EarnWave", "web_app": {"url": webapp_url}}
@@ -321,12 +358,12 @@ def bot_webhook():
 
 @app.route("/set-webhook")
 def set_webhook():
-    """Visit this URL once after deploying to register the bot webhook."""
     webhook_url = request.url_root + "bot-webhook"
     resp = requests.get(f"{TELEGRAM_API}/setWebhook", params={"url": webhook_url})
     return jsonify(resp.json())
 
 
+# Initialize the database table structure
 init_db()
 
 if __name__ == "__main__":
