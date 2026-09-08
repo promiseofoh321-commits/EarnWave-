@@ -1,478 +1,723 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EarnWave</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EarnWave</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='//libtl.com/sdk.js' data-zone='11739907' data-sdk='show_11739907'></script>
+<style>
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card2: #2C2C2E;
+    --sep: #38383A;
+    --label: #FFFFFF;
+    --sublabel: #8E8E93;
+    --blue: #0A84FF;
+    --green: #30D158;
+    --red: #FF453A;
+    --orange: #FF9F0A;
+    --purple: #BF5AF2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--label);
+    min-height: 100vh;
+    padding-bottom: 96px;
+  }
 
-  <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  .page { display: none; }
+  .page.active { display: block; animation: fadein 0.2s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 
-  <!-- ===== MONETAG SDK - ZONE 11739907 ===== -->
-  <!-- IMPORTANT: Replace the src below with the exact one from "copy this tag" in Monetag -->
-  <script src="https://your-monetag-domain.com/sdk.js"
-          data-zone="11739907"
-          data-sdk="show_11739907">
-  </script>
-  <!-- ====================================== -->
+  .large-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    padding: 18px 16px 4px;
+  }
+  .large-sub {
+    font-size: 14px;
+    color: var(--sublabel);
+    padding: 0 16px 14px;
+  }
 
-  <style>
-    :root {
-      --bg: #000000;
-      --card: #1c1c1e;
-      --card2: #2c2c2e;
-      --text: #ffffff;
-      --secondary: #8e8e93;
-      --blue: #0a84ff;
-      --green: #30d158;
-      --purple: #bf5af2;
-    }
+  .section-header {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--sublabel);
+    padding: 18px 16px 6px;
+  }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  .group {
+    background: var(--card);
+    border-radius: 14px;
+    margin: 0 16px;
+    overflow: hidden;
+  }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding-bottom: 90px;
-      overflow-x: hidden;
-    }
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    min-height: 46px;
+    border-bottom: 0.5px solid var(--sep);
+    gap: 12px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row.tap { cursor: pointer; }
+  .row.tap:active { background: var(--card2); }
 
-    .container { max-width: 430px; margin: 0 auto; padding: 16px; }
+  .row-icon {
+    width: 29px; height: 29px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .row-icon.blue { background: var(--blue); }
+  .row-icon.green { background: var(--green); }
+  .row-icon.orange { background: var(--orange); }
+  .row-icon.purple { background: var(--purple); }
+  .row-icon.red { background: var(--red); }
 
-    .header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0 20px;
-    }
-    .header h1 { font-size: 18px; font-weight: 600; }
-    .close-btn, .menu-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--card2); display: flex; align-items: center; justify-content: center;
-      font-size: 18px; color: var(--text); border: none; cursor: pointer;
-    }
+  .row-title { font-size: 16px; flex: 1; }
+  .row-title .sub { display: block; font-size: 12px; color: var(--sublabel); margin-top: 1px; }
+  .row-value { font-size: 15px; color: var(--sublabel); display: flex; align-items: center; gap: 4px; }
+  .chevron { color: #545458; font-size: 15px; font-weight: 700; }
 
-    .user-info { margin-bottom: 20px; }
-    .user-info h2 { font-size: 22px; font-weight: 700; }
-    .user-info p { color: var(--secondary); font-size: 14px; margin-top: 2px; }
+  /* Balance card */
+  .balance-card {
+    background: linear-gradient(160deg, #1C1C1E 0%, #101012 100%);
+    border: 0.5px solid var(--sep);
+    border-radius: 18px;
+    margin: 8px 16px 0;
+    padding: 20px;
+  }
+  .balance-card .label { font-size: 13px; color: var(--sublabel); }
+  .balance-card .figure { font-size: 38px; font-weight: 700; letter-spacing: -1px; margin-top: 4px; transition: transform 0.2s ease; }
+  .balance-card .figure.bump { transform: scale(1.05); }
+  .balance-mini-row { display: flex; margin-top: 16px; padding-top: 14px; border-top: 0.5px solid var(--sep); }
+  .balance-mini-item { flex: 1; }
+  .balance-mini-item .l { font-size: 11px; color: var(--sublabel); }
+  .balance-mini-item .v { font-size: 16px; font-weight: 600; margin-top: 2px; }
 
-    .balance-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .balance-card .label { color: var(--secondary); font-size: 13px; }
-    .balance-card .amount { font-size: 36px; font-weight: 700; margin: 6px 0 16px; letter-spacing: -1px; }
-    .stats { display: flex; justify-content: space-between; font-size: 13px; }
-    .stats span { color: var(--secondary); }
-    .progress {
-      height: 4px; background: #3a3a3c; border-radius: 2px; margin-top: 12px; overflow: hidden;
-    }
-    .progress-bar { height: 100%; background: var(--blue); width: 0%; transition: width 0.4s; }
+  .btn-fill {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 16px 16px 0;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .btn-fill:active { transform: scale(0.97); }
+  .btn-fill:disabled { background: var(--card2); color: var(--sublabel); }
 
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .action-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .action-card .icon {
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 18px;
-    }
-    .action-card .title { font-size: 15px; font-weight: 600; }
-    .action-card .desc { font-size: 12px; color: var(--secondary); }
-    .btn {
-      border: none; border-radius: 12px; padding: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      margin-top: 6px;
-    }
-    .btn-blue { background: var(--blue); color: white; }
-    .btn-green { background: var(--green); color: white; }
-    .btn-outline { background: transparent; color: var(--blue); padding: 0; text-align: left; }
+  .btn-fill.green { background: var(--green); }
 
-    .section-title { font-size: 13px; color: var(--secondary); margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .quick-btn {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex; align-items: center; gap: 10px;
-      border: none; color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer;
-    }
+  .status {
+    text-align: center;
+    font-size: 13px;
+    color: var(--sublabel);
+    min-height: 18px;
+    padding: 10px 16px 0;
+  }
+  .status.error { color: var(--red); }
+  .status.success { color: var(--green); }
 
-    .payout-item {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px 16px;
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px;
-    }
-    .payout-item .left { display: flex; align-items: center; gap: 12px; }
-    .check { width: 24px; height: 24px; background: #1c3a2a; color: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .progress-wrap { padding: 14px 16px 0; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--sublabel); margin-bottom: 8px; }
+  .segment-row { display: flex; gap: 3px; }
+  .segment { flex: 1; height: 5px; border-radius: 3px; background: var(--card2); }
+  .segment.filled { background: var(--blue); }
 
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(28,28,30,0.92);
-      backdrop-filter: blur(20px);
-      border-top: 0.5px solid #3a3a3c;
-      display: flex; justify-content: space-around;
-      padding: 10px 0 24px;
-      max-width: 430px; margin: 0 auto;
-    }
-    .nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      color: var(--secondary); font-size: 11px; background: none; border: none; cursor: pointer;
-    }
-    .nav-item.active { color: var(--blue); }
-    .nav-item span { font-size: 22px; }
+  /* Input rows */
+  .input-row { padding: 10px 16px; }
+  .input-row label { font-size: 12px; color: var(--sublabel); display: block; margin-bottom: 6px; }
+  .input-row input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--label);
+    font-size: 16px;
+    padding: 4px 0;
+  }
+  .input-row input::placeholder { color: #545458; }
+  .field-error {
+    font-size: 12px; color: var(--red);
+    padding: 4px 16px 0;
+    display: none;
+  }
+  .field-error.show { display: block; }
 
-    .page { display: none; }
-    .page.active { display: block; }
+  /* Live withdrawals ticker */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--green);
+    padding: 0 16px 8px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-    .back-btn {
-      background: none; border: none; color: var(--blue); font-size: 16px;
-      display: flex; align-items: center; gap: 6px; margin-bottom: 20px; cursor: pointer;
-    }
-    .input-group { margin-bottom: 16px; }
-    .input-group label { display: block; font-size: 13px; color: var(--secondary); margin-bottom: 6px; }
-    .input-group input {
-      width: 100%; background: var(--card); border: none; border-radius: 12px;
-      padding: 14px 16px; color: var(--text); font-size: 16px; outline: none;
-    }
-    .full-btn {
-      width: 100%; background: var(--blue); color: white; border: none;
-      border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
-    }
-    .referral-box {
-      background: var(--card); border-radius: 16px; padding: 16px; margin-top: 16px;
-    }
-    .referral-box code {
-      display: block; background: var(--card2); padding: 12px; border-radius: 10px;
-      font-size: 15px; margin: 10px 0; word-break: break-all;
-    }
-    .copy-btn {
-      background: var(--blue); color: white; border: none; border-radius: 10px;
-      padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
-    }
+  .withdraw-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; border-bottom: 0.5px solid var(--sep); font-size: 14px; }
+  .withdraw-item:last-child { border-bottom: none; }
+  .withdraw-item .u { color: var(--label); }
+  .withdraw-item .a { color: var(--green); font-weight: 600; }
+  .withdraw-item .t { color: var(--sublabel); font-size: 12px; margin-left: 8px; }
+  .empty-row { text-align: center; color: var(--sublabel); font-size: 13px; padding: 18px 0; }
 
-    .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--card2); color: white; padding: 12px 20px; border-radius: 12px;
-      font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; }
-  </style>
+  /* Activity list */
+  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; border-bottom: 0.5px solid var(--sep); font-size: 14px; }
+  .log-item:last-child { border-bottom: none; }
+  .log-left { display: flex; align-items: center; }
+  .log-icon { width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #06131F; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-right: 10px; flex-shrink: 0; }
+  .log-icon.neg { background: var(--red); color: #fff; }
+  .log-amt { color: var(--green); font-weight: 600; }
+  .log-amt.neg { color: var(--red); }
+  .log-time { color: var(--sublabel); font-size: 11px; margin-left: 8px; }
+
+  /* Top bar per page (small, with bell) */
+  .topbar { display: flex; justify-content: flex-end; padding: 14px 16px 0; }
+  .icon-btn {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--card);
+    border: none; color: var(--label);
+    font-size: 15px; cursor: pointer;
+  }
+  .icon-btn .dot {
+    position: absolute; top: 4px; right: 5px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red); display: none;
+    border: 2px solid var(--bg);
+  }
+  .icon-btn .dot.show { display: block; }
+
+  /* Bottom tab bar */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(28,28,30,0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid var(--sep);
+    display: flex;
+    padding: 8px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index: 20;
+  }
+  .nav-item {
+    flex: 1;
+    background: none; border: none;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--sublabel);
+    font-size: 10px;
+    cursor: pointer;
+  }
+  .nav-item .ic { font-size: 21px; }
+  .nav-item.active { color: var(--blue); }
+
+  /* Sheets (notifications only now) */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 30; align-items: flex-end; justify-content: center; }
+  .overlay.show { display: flex; }
+  .sheet { background: var(--card); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px 16px calc(24px + env(safe-area-inset-bottom)); }
+  .sheet-handle { width: 36px; height: 5px; background: var(--sep); border-radius: 3px; margin: 0 auto 16px; }
+  .sheet h3 { font-size: 18px; font-weight: 700; padding: 0 4px 4px; }
+  .notif-item { padding: 12px 16px; border-bottom: 0.5px solid var(--sep); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item .t { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .notif-item .d { font-size: 13px; color: var(--sublabel); }
+  .sheet-close {
+    display: block; width: calc(100% - 32px); margin: 16px auto 0;
+    background: var(--card2); color: var(--label); border: none;
+    border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+
+  .link-box {
+    background: var(--card2);
+    border-radius: 12px;
+    margin: 12px 16px 0;
+    padding: 14px;
+    font-size: 13px;
+    color: var(--sublabel);
+    word-break: break-all;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- HOME -->
-    <div id="home" class="page active">
-      <div class="header">
-        <button class="close-btn" onclick="Telegram.WebApp.close()">✕</button>
-        <h1>EarnWave</h1>
-        <button class="menu-btn">•••</button>
-      </div>
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="topbar">
+    <button class="icon-btn" id="bellBtn">&#128276;<span class="dot show" id="bellDot"></span></button>
+  </div>
+  <div class="large-title">EarnWave</div>
+  <div class="large-sub">Watch &middot; Earn &middot; Withdraw</div>
 
-      <div class="user-info">
-        <h2 id="username">Promzy</h2>
-        <p>Watch • Earn • Withdraw</p>
-      </div>
-
-      <div class="balance-card">
-        <div class="label">Available Balance</div>
-        <div class="amount" id="balance">$0.000</div>
-        <div class="stats">
-          <div>Total earned<br><strong id="total-earned">$0.000</strong></div>
-          <div style="text-align:right">Ads watched<br><strong id="ads-watched">0/50</strong></div>
-        </div>
-        <div class="progress"><div class="progress-bar" id="progress"></div></div>
-      </div>
-
-      <div class="actions">
-        <div class="action-card">
-          <div class="icon" style="background:#3a1f5e;color:var(--purple)">▶</div>
-          <div class="title">Watch Bonus Video</div>
-          <div class="desc">Earn $0.005 per view</div>
-          <button class="btn btn-outline" onclick="watchAd()">Watch Now</button>
-        </div>
-        <div class="action-card">
-          <div class="icon" style="background:#1c3a2a;color:var(--green)">📅</div>
-          <div class="title">Daily Check-in</div>
-          <div class="desc">Streak: <span id="streak">0</span> days</div>
-          <button class="btn btn-green" onclick="doCheckin()">Claim</button>
-        </div>
-      </div>
-
-      <div class="section-title">Quick Actions</div>
-      <div class="quick-actions">
-        <button class="quick-btn" onclick="showPage('withdraw')">
-          <span>💰</span> Withdraw
-        </button>
-        <button class="quick-btn" onclick="showPage('profile')">
-          <span>👤</span> Profile
-        </button>
-      </div>
-
-      <div class="section-title">Recent Network Payouts</div>
-      <div id="payouts-list"></div>
-    </div>
-
-    <!-- WITHDRAW -->
-    <div id="withdraw" class="page">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2 style="margin-bottom:20px;font-size:24px;">Request Withdrawal</h2>
-
-      <div class="balance-card" style="margin-bottom:24px;">
-        <div class="label">Available to withdraw</div>
-        <div class="amount" id="withdraw-balance">$0.000</div>
-        <div class="label">Minimum: $0.250</div>
-      </div>
-
-      <div class="input-group">
-        <label>USDT Wallet Address (TRC20 / BEP20)</label>
-        <input type="text" id="wallet-input" placeholder="Enter your wallet address" />
-      </div>
-
-      <button class="full-btn" onclick="requestWithdraw()">Withdraw</button>
-      <p style="text-align:center;color:var(--secondary);font-size:13px;margin-top:12px;">
-        Secure • Fast • Low Fees
-      </p>
-    </div>
-
-    <!-- PROFILE -->
-    <div id="profile" class="page">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2 style="margin-bottom:20px;font-size:24px;">Profile</h2>
-
-      <div class="balance-card">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:56px;height:56px;background:var(--card2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>
-          <div>
-            <div style="font-size:18px;font-weight:600;" id="profile-name">Promzy</div>
-            <div style="color:var(--secondary);font-size:14px;" id="profile-id">ID: —</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section-title">Your Referral Link</div>
-      <div class="referral-box">
-        <div style="font-size:14px;color:var(--secondary);">Share & earn when friends join</div>
-        <code id="referral-link">https://t.me/YourBot?start=XXXX</code>
-        <button class="copy-btn" onclick="copyReferral()">Copy Link</button>
-      </div>
-
-      <div class="section-title" style="margin-top:24px;">Stats</div>
-      <div class="balance-card">
-        <div class="stats">
-          <div>Total Earned<br><strong id="profile-earned">$0.000</strong></div>
-          <div style="text-align:right">Ads Watched<br><strong id="profile-ads">0</strong></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- REFERRALS -->
-    <div id="referrals" class="page">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2 style="margin-bottom:20px;font-size:24px;">Referrals</h2>
-      <div class="balance-card">
-        <p style="color:var(--secondary);">Invite friends and earn rewards when they watch ads.</p>
-        <code id="referral-link-2" style="display:block;margin:16px 0;background:var(--card2);padding:12px;border-radius:10px;"></code>
-        <button class="full-btn" onclick="copyReferral()">Copy Referral Link</button>
-      </div>
+  <div class="balance-card">
+    <div class="label">Available balance</div>
+    <div class="figure" id="balanceDisplay">$0.000</div>
+    <div class="balance-mini-row">
+      <div class="balance-mini-item"><div class="l">Today</div><div class="v" id="todayEarnedDisplay">$0.000</div></div>
+      <div class="balance-mini-item"><div class="l">Ads today</div><div class="v" id="adCountTodayDisplay">0</div></div>
+      <div class="balance-mini-item"><div class="l">Referrals</div><div class="v" id="referralCountDisplay">0</div></div>
     </div>
   </div>
 
-  <!-- Bottom Nav -->
-  <div class="bottom-nav">
-    <button class="nav-item active" onclick="showPage('home')">
-      <span>🏠</span> Home
-    </button>
-    <button class="nav-item" onclick="showPage('referrals')">
-      <span>👥</span> Referrals
-    </button>
-    <button class="nav-item" onclick="showPage('profile')">
-      <span>👤</span> Profile
-    </button>
+  <button class="btn-fill" id="watchBtnHome">Watch ad &middot; earn $0.005</button>
+  <div class="status" id="statusMsgHome"></div>
+
+  <div class="section-header">Quick actions</div>
+  <div class="group">
+    <div class="row tap" data-nav="withdraw">
+      <div class="row-icon green">&#128179;</div>
+      <div class="row-title">Withdraw</div>
+      <div class="row-value">Min $0.25 <span class="chevron">&rsaquo;</span></div>
+    </div>
+    <div class="row tap" data-nav="referrals">
+      <div class="row-icon purple">&#128101;</div>
+      <div class="row-title">Invite &amp; earn</div>
+      <div class="row-value"><span class="chevron">&rsaquo;</span></div>
+    </div>
+    <div class="row tap" id="checkinRowHome">
+      <div class="row-icon orange">&#127873;</div>
+      <div class="row-title" id="checkinTitleHome">Daily bonus</div>
+      <div class="row-value" id="checkinValueHome">Claim $0.01 <span class="chevron">&rsaquo;</span></div>
+    </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="section-header">Recent activity</div>
+  <div class="group" id="historyListHome"><div class="empty-row">No recent earnings yet</div></div>
+</div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    tg.setHeaderColor('#000000');
-    tg.setBackgroundColor('#000000');
+<!-- EARN -->
+<div class="page" id="page-earn">
+  <div class="topbar"><div style="width:34px;"></div></div>
+  <div class="large-title">Earn</div>
+  <div class="large-sub">Watch ads to build your balance</div>
 
-    let user = null;
-    const tgUser = tg.initDataUnsafe?.user;
-    const telegramId = tgUser?.id ? String(tgUser.id) : "demo_user";
-    const username = tgUser?.username || tgUser?.first_name || "Promzy";
+  <div class="group" style="margin-top: 8px;">
+    <div class="progress-wrap">
+      <div class="progress-labels"><span id="segmentLabel">0 / 50 ads today</span><span>Resets daily</span></div>
+      <div class="segment-row" id="segmentRow"></div>
+    </div>
+  </div>
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
+  <button class="btn-fill" id="watchBtnEarn">Watch ad &middot; earn $0.005</button>
+  <div class="status" id="statusMsgEarn"></div>
+
+  <div class="section-header">Daily bonus</div>
+  <div class="group">
+    <div class="row tap" id="checkinRowEarn">
+      <div class="row-icon orange">&#127873;</div>
+      <div class="row-title" id="checkinTitleEarn">Daily bonus<span class="sub" id="checkinSubEarn">Come back every day</span></div>
+      <div class="row-value" id="checkinValueEarn">Claim $0.01 <span class="chevron">&rsaquo;</span></div>
+    </div>
+  </div>
+
+  <div class="section-header">Ad history</div>
+  <div class="group" id="historyListEarn"><div class="empty-row">No ads watched yet</div></div>
+</div>
+
+<!-- REFERRALS -->
+<div class="page" id="page-referrals">
+  <div class="topbar"><div style="width:34px;"></div></div>
+  <div class="large-title">Referrals</div>
+  <div class="large-sub">Invite friends, get notified when they join</div>
+
+  <div class="group" style="margin-top: 8px;">
+    <div class="row">
+      <div class="row-icon purple">&#128101;</div>
+      <div class="row-title">Friends joined</div>
+      <div class="row-value" id="referralCountDisplay2">0</div>
+    </div>
+  </div>
+
+  <div class="section-header">Your invite link</div>
+  <div class="group">
+    <div class="link-box" id="referralLink" style="margin: 0;">Loading your link&hellip;</div>
+  </div>
+  <button class="btn-fill" id="referShareBtn">Share invite link</button>
+
+  <div class="section-header">Friends who joined</div>
+  <div class="group" id="referralListGroup"><div class="empty-row">No referrals yet</div></div>
+</div>
+
+<!-- WITHDRAW -->
+<div class="page" id="page-withdraw">
+  <div class="topbar"><div style="width:34px;"></div></div>
+  <div class="large-title">Withdraw</div>
+  <div class="large-sub">Minimum withdrawal is $0.250</div>
+
+  <div class="balance-card" style="margin-top: 8px;">
+    <div class="label">Available balance</div>
+    <div class="figure" id="balanceDisplayW">$0.000</div>
+  </div>
+
+  <div class="section-header">Withdrawal details</div>
+  <div class="group">
+    <div class="input-row">
+      <label>TON wallet address</label>
+      <input id="walletInput" placeholder="UQ...">
+    </div>
+    <div class="input-row">
+      <label>Amount (USD)</label>
+      <input id="amountInput" placeholder="0.250" inputmode="decimal">
+    </div>
+  </div>
+  <div class="field-error" id="withdrawError"></div>
+
+  <button class="btn-fill green" id="withdrawSubmit">Request withdrawal</button>
+  <div class="status" id="statusMsgWithdraw"></div>
+
+  <div class="section-header">Live withdrawals</div>
+  <div class="live-badge"><span class="live-dot"></span>Updating in real time</div>
+  <div class="group" id="liveWithdrawalsList"><div class="empty-row">No withdrawals yet</div></div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="page-profile">
+  <div class="topbar"><div style="width:34px;"></div></div>
+  <div class="large-title">Profile</div>
+  <div class="large-sub" id="profileUserDisplay">Telegram user</div>
+
+  <div class="section-header">Overview</div>
+  <div class="group">
+    <div class="row">
+      <div class="row-icon blue">&#128100;</div>
+      <div class="row-title">Telegram ID<span class="sub" id="profileUserIdDisplay">&mdash;</span></div>
+    </div>
+    <div class="row">
+      <div class="row-icon green">&#128176;</div>
+      <div class="row-title">Total earned</div>
+      <div class="row-value" id="profileTotalEarned">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="row-icon orange">&#128065;</div>
+      <div class="row-title">Ads watched</div>
+      <div class="row-value" id="profileTotalAds">0</div>
+    </div>
+    <div class="row">
+      <div class="row-icon purple">&#128101;</div>
+      <div class="row-title">Referrals</div>
+      <div class="row-value" id="profileReferrals">0</div>
+    </div>
+    <div class="row">
+      <div class="row-icon red">&#128293;</div>
+      <div class="row-title">Check-in streak</div>
+      <div class="row-value" id="profileStreak">0 days</div>
+    </div>
+  </div>
+
+  <div class="section-header">Balance</div>
+  <div class="group">
+    <div class="row tap" data-nav="withdraw">
+      <div class="row-icon green">&#128179;</div>
+      <div class="row-title">Withdraw funds</div>
+      <div class="row-value" id="profileBalance">$0.000 <span class="chevron">&rsaquo;</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-item active" data-page="home"><span class="ic">&#127968;</span>Home</button>
+  <button class="nav-item" data-page="earn"><span class="ic">&#9654;&#65039;</span>Earn</button>
+  <button class="nav-item" data-page="referrals"><span class="ic">&#128101;</span>Referrals</button>
+  <button class="nav-item" data-page="withdraw"><span class="ic">&#128179;</span>Withdraw</button>
+  <button class="nav-item" data-page="profile"><span class="ic">&#128100;</span>Profile</button>
+</div>
+
+<!-- Notifications sheet -->
+<div class="overlay" id="notifOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Notifications</h3>
+    <div id="notifList" style="margin-top: 10px;"></div>
+    <button class="sheet-close" id="notifClose">Close</button>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  const BOT_USERNAME = "EarnWave2009_bot";
+  const REWARD_PER_AD = 0.005;
+  const CHECKIN_REWARD = 0.01;
+  const DAILY_AD_LIMIT = 50;
+  const SEGMENT_COUNT = 10;
+  const MIN_WITHDRAWAL = 0.25;
+  const API_BASE = "";
+
+  const userId = tg?.initDataUnsafe?.user?.id || "guest";
+  const userName = tg?.initDataUnsafe?.user?.first_name || "Telegram user";
+
+  let state = {
+    balance: 0, totalEarned: 0, adsToday: 0,
+    checkinStreak: 0, lastCheckinDate: "",
+    referralCount: 0, history: []
+  };
+
+  const el = (id) => document.getElementById(id);
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+
+  async function api(path, options) {
+    const res = await fetch(API_BASE + path, options);
+    return res.json();
+  }
+
+  function buildSegments() {
+    const row = el('segmentRow');
+    row.innerHTML = '';
+    for (let i = 0; i < SEGMENT_COUNT; i++) {
+      const s = document.createElement('div');
+      s.className = 'segment';
+      row.appendChild(s);
     }
+  }
 
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      if (pageId === 'home') document.querySelectorAll('.nav-item')[0].classList.add('active');
-      if (pageId === 'referrals') document.querySelectorAll('.nav-item')[1].classList.add('active');
-      if (pageId === 'profile') document.querySelectorAll('.nav-item')[2].classList.add('active');
-
-      if (pageId === 'withdraw' && user) {
-        document.getElementById('withdraw-balance').textContent = `\[ {user.balance.toFixed(3)}`;
-      }
+  function renderLogList(containerId, items, emptyText) {
+    const list = el(containerId);
+    if (items.length === 0) {
+      list.innerHTML = `<div class="empty-row">${emptyText}</div>`;
+      return;
     }
+    list.innerHTML = items.map(h => {
+      const isNeg = h.amount < 0;
+      const iconChar = isNeg ? '\u2193' : (h.type === 'checkin' ? '\u2713' : (h.type === 'referral' ? 'R' : '$'));
+      const time = h.created_at ? h.created_at.slice(11, 16) : '';
+      return `<div class="log-item">
+        <span class="log-left"><span class="log-icon ${isNeg ? 'neg' : ''}">${iconChar}</span>${h.label}</span>
+        <span><span class="log-amt ${isNeg ? 'neg' : ''}">${isNeg ? '-' : '+'}$${Math.abs(h.amount).toFixed(3)}</span><span class="log-time">${time}</span></span>
+      </div>`;
+    }).join('');
+  }
 
-    function updateUI() {
-      if (!user) return;
-      document.getElementById('username').textContent = user.username;
-      document.getElementById('balance').textContent = ` \]{user.balance.toFixed(3)}`;
-      document.getElementById('total-earned').textContent = `\[ {user.total_earned.toFixed(3)}`;
-      document.getElementById('ads-watched').textContent = `${user.ads_watched}/50`;
-      document.getElementById('progress').style.width = `${Math.min(user.ads_watched / 50 * 100, 100)}%`;
-      document.getElementById('streak').textContent = user.streak;
+  function render() {
+    const balStr = '$' + state.balance.toFixed(3);
+    el('balanceDisplay').textContent = balStr;
+    el('balanceDisplayW').textContent = balStr;
+    el('profileBalance').innerHTML = balStr + ' <span class="chevron">&rsaquo;</span>';
 
-      document.getElementById('profile-name').textContent = user.username;
-      document.getElementById('profile-id').textContent = `ID: ${user.id}`;
-      document.getElementById('profile-earned').textContent = ` \]{user.total_earned.toFixed(3)}`;
-      document.getElementById('profile-ads').textContent = user.ads_watched;
+    el('todayEarnedDisplay').textContent = '$' + (state.adsToday * REWARD_PER_AD).toFixed(3);
+    el('adCountTodayDisplay').textContent = state.adsToday;
+    el('referralCountDisplay').textContent = state.referralCount;
+    el('referralCountDisplay2').textContent = state.referralCount;
+    el('profileReferrals').textContent = state.referralCount;
 
-      const link = `https://t.me/YourBotUsername?start=${user.referral_code}`;
-      document.getElementById('referral-link').textContent = link;
-      document.getElementById('referral-link-2').textContent = link;
+    const adsWatchedCount = state.history.filter(h => h.type === 'ad').length;
+    el('profileTotalAds').textContent = adsWatchedCount;
+    el('profileTotalEarned').textContent = '$' + state.totalEarned.toFixed(2);
+    el('profileUserDisplay').textContent = userName;
+    el('profileUserIdDisplay').textContent = String(userId);
+    el('profileStreak').textContent = state.checkinStreak + (state.checkinStreak === 1 ? ' day' : ' days');
+
+    el('segmentLabel').textContent = state.adsToday + ' / ' + DAILY_AD_LIMIT + ' ads today';
+    const filled = Math.round((state.adsToday / DAILY_AD_LIMIT) * SEGMENT_COUNT);
+    document.querySelectorAll('#segmentRow .segment').forEach((s, i) => s.classList.toggle('filled', i < filled));
+
+    const limitReached = state.adsToday >= DAILY_AD_LIMIT;
+    [el('watchBtnHome'), el('watchBtnEarn')].forEach(btn => {
+      btn.disabled = limitReached;
+      btn.textContent = limitReached ? 'Daily limit reached' : 'Watch ad \u00b7 earn $' + REWARD_PER_AD.toFixed(3);
+    });
+
+    const checkedInToday = state.lastCheckinDate === todayStr();
+    const checkinLabel = checkedInToday ? 'Checked in' : 'Daily bonus';
+    const checkinValue = checkedInToday
+      ? 'Streak: ' + state.checkinStreak
+      : 'Claim $' + CHECKIN_REWARD.toFixed(2) + ' \u203a';
+    el('checkinTitleHome').textContent = checkinLabel;
+    el('checkinValueHome').textContent = checkinValue;
+    el('checkinTitleEarn').innerHTML = checkinLabel + '<span class="sub" id="checkinSubEarn">' + (checkedInToday ? 'Come back tomorrow' : 'Come back every day') + '</span>';
+    el('checkinValueEarn').textContent = checkinValue;
+
+    const recent = state.history.slice(0, 15);
+    renderLogList('historyListHome', recent.slice(0, 5), 'No recent earnings yet');
+    renderLogList('historyListEarn', recent.filter(h => h.type === 'ad' || h.type === 'checkin'), 'No ads watched yet');
+
+    const referrals = state.history.filter(h => h.type === 'referral');
+    if (referrals.length === 0) {
+      el('referralListGroup').innerHTML = '<div class="empty-row">No referrals yet</div>';
+    } else {
+      el('referralListGroup').innerHTML = referrals.map(h => `
+        <div class="row">
+          <div class="row-icon purple">&#128101;</div>
+          <div class="row-title">${h.label.replace('Referral joined: ', '')}<span class="sub">Joined ${h.created_at ? h.created_at.slice(0,10) : ''}</span></div>
+        </div>`).join('');
     }
+  }
 
-    async function loadUser() {
-      const res = await fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: telegramId, username })
+  function bumpBalance() {
+    [el('balanceDisplay'), el('balanceDisplayW')].forEach(b => {
+      b.classList.add('bump');
+      setTimeout(() => b.classList.remove('bump'), 250);
+    });
+  }
+
+  async function loadState() {
+    try {
+      const data = await api('/api/user/' + userId);
+      state.balance = data.balance;
+      state.totalEarned = data.total_earned;
+      state.adsToday = data.ads_today;
+      state.checkinStreak = data.checkin_streak;
+      state.lastCheckinDate = data.last_checkin_date;
+      state.referralCount = data.referral_count;
+      state.history = data.activity;
+    } catch (e) {
+      setStatus('Could not reach the server.', 'error');
+    }
+    render();
+  }
+
+  function setStatus(text, type) {
+    ['statusMsgHome', 'statusMsgEarn', 'statusMsgWithdraw'].forEach(id => {
+      el(id).textContent = text;
+      el(id).className = 'status' + (type ? ' ' + type : '');
+    });
+  }
+
+  // Ad SDK (Monetag)
+  function watchAd() {
+    if (state.adsToday >= DAILY_AD_LIMIT) return;
+    if (typeof show_11739907 !== 'function') { setStatus('Ads are not ready yet.', 'error'); return; }
+    [el('watchBtnHome'), el('watchBtnEarn')].forEach(b => b.disabled = true);
+    setStatus('Loading ad\u2026');
+    show_11739907({ ymid: String(userId) })
+      .then(async () => {
+        await new Promise(r => setTimeout(r, 1200));
+        await loadState();
+        bumpBalance();
+        setStatus('Ad watched \u2014 reward added!', 'success');
+      })
+      .catch(() => setStatus('Ad was skipped or failed. No reward given.', 'error'))
+      .finally(() => render());
+  }
+  el('watchBtnHome').addEventListener('click', watchAd);
+  el('watchBtnEarn').addEventListener('click', watchAd);
+
+  // Daily check-in
+  async function claimCheckin() {
+    if (state.lastCheckinDate === todayStr()) return;
+    try {
+      const result = await api('/api/checkin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
       });
-      user = await res.json();
-      updateUI();
-    }
+      if (result.error) { setStatus(result.error, 'error'); return; }
+      await loadState();
+      bumpBalance();
+      setStatus('Daily bonus claimed!', 'success');
+    } catch (e) { setStatus('Could not reach the server.', 'error'); }
+  }
+  el('checkinRowHome').addEventListener('click', claimCheckin);
+  el('checkinRowEarn').addEventListener('click', claimCheckin);
 
-    async function loadPayouts() {
-      const res = await fetch('/api/payouts');
-      const data = await res.json();
-      const list = document.getElementById('payouts-list');
-      list.innerHTML = data.map(p => `
-        <div class="payout-item">
-          <div class="left">
-            <div class="check">✓</div>
-            <div>
-              <div style="font-weight:500">${p.name} withdrew \[ {p.amount}</div>
-              <div style="font-size:12px;color:var(--secondary)">${p.tx}</div>
-            </div>
-          </div>
-          <div style="font-size:12px;color:var(--secondary)">${p.time}</div>
-        </div>
-      `).join('');
-    }
-
-    // ========== FIXED MONETAG FUNCTION ==========
-    async function watchAd() {
-      const btn = event?.currentTarget;
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = "Loading ad...";
-      }
-
-      try {
-        if (typeof show_11739907 !== "function") {
-          throw new Error("Monetag SDK not loaded");
-        }
-
-        // Show the ad
-        await show_11739907({
-          ymid: telegramId + "_" + Date.now()
-        });
-
-        // Ad watched → reward user
-        const res = await fetch("/api/watch-ad", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telegram_id: telegramId })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          user.balance = data.balance;
-          user.total_earned = data.total_earned;
-          user.ads_watched = data.ads_watched;
-          updateUI();
-          showToast(`+ \]{data.reward.toFixed(3)} earned!`);
-        }
-
-      } catch (err) {
-        console.error("Ad Error:", err);
-        showToast("Ad not available. Try again later");
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerText = "Watch Now";
-        }
-      }
-    }
-    // ============================================
-
-    async function doCheckin() {
-      const res = await fetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: telegramId })
+  // Withdraw
+  el('withdrawSubmit').addEventListener('click', async () => {
+    const wallet = el('walletInput').value.trim();
+    const amount = parseFloat(el('amountInput').value);
+    const errEl = el('withdrawError');
+    if (!wallet || wallet.length < 6) { errEl.textContent = 'Enter a valid wallet address'; errEl.classList.add('show'); return; }
+    if (!amount || amount < MIN_WITHDRAWAL) { errEl.textContent = 'Minimum withdrawal is $' + MIN_WITHDRAWAL.toFixed(3); errEl.classList.add('show'); return; }
+    if (amount > state.balance) { errEl.textContent = 'Amount exceeds your available balance'; errEl.classList.add('show'); return; }
+    errEl.classList.remove('show');
+    try {
+      const result = await api('/api/withdraw', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, wallet, amount })
       });
-      const data = await res.json();
-      if (data.success) {
-        user.balance = data.balance;
-        user.streak = data.streak;
-        updateUI();
-        showToast(`+\[ {data.reward.toFixed(3)} claimed!`);
-      } else {
-        showToast(data.message);
+      if (result.error) { errEl.textContent = result.error; errEl.classList.add('show'); return; }
+      await loadState();
+      el('walletInput').value = ''; el('amountInput').value = '';
+      setStatus('Withdrawal request submitted', 'success');
+      loadLiveWithdrawals();
+    } catch (e) { errEl.textContent = 'Could not reach the server.'; errEl.classList.add('show'); }
+  });
+  ['walletInput', 'amountInput'].forEach(id => el(id).addEventListener('input', () => el('withdrawError').classList.remove('show')));
+
+  // Live withdrawals feed
+  async function loadLiveWithdrawals() {
+    try {
+      const data = await api('/api/recent_withdrawals');
+      const list = el('liveWithdrawalsList');
+      if (!data.withdrawals || data.withdrawals.length === 0) {
+        list.innerHTML = '<div class="empty-row">No withdrawals yet</div>';
+        return;
       }
-    }
+      list.innerHTML = data.withdrawals.map(w => `
+        <div class="withdraw-item">
+          <span class="u">${w.user}</span>
+          <span><span class="a">$${w.amount.toFixed(3)}</span><span class="t">${w.created_at ? w.created_at.slice(11,16) : ''}</span></span>
+        </div>`).join('');
+    } catch (e) {}
+  }
+  setInterval(loadLiveWithdrawals, 20000);
 
-    async function requestWithdraw() {
-      const wallet = document.getElementById('wallet-input').value.trim();
-      const res = await fetch('/api/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: telegramId, wallet })
-      });
-      const data = await res.json();
-      if (data.success) {
-        user.balance = 0;
-        updateUI();
-        showToast(`Withdrawal of \]{data.amount.toFixed(3)} requested!`);
-        showPage('home');
-      } else {
-        showToast(data.message);
-      }
-    }
+  // Refer
+  function setupReferralLink() {
+    const link = 'https://t.me/' + BOT_USERNAME + '?start=ref_' + userId;
+    el('referralLink').textContent = link;
+  }
+  el('referShareBtn').addEventListener('click', () => {
+    const link = el('referralLink').textContent;
+    const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Join EarnWave and start earning \u2014 watch ads, get paid.');
+    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl); else window.open(shareUrl, '_blank');
+  });
 
-    function copyReferral() {
-      const link = document.getElementById('referral-link').textContent;
-      navigator.clipboard.writeText(link);
-      showToast('Referral link copied!');
-    }
+  // Notifications
+  const staticNotifications = [
+    { t: 'Welcome to EarnWave', d: 'Watch ads and earn \u2014 check in daily for bonus rewards.' },
+    { t: 'Withdrawals', d: 'Requests are reviewed manually while we set up automated payouts.' }
+  ];
+  el('bellBtn').addEventListener('click', () => {
+    const referralNotifs = state.history
+      .filter(h => h.type === 'referral')
+      .slice(0, 10)
+      .map(h => ({ t: 'New referral!', d: h.label.replace('Referral joined: ', '') + ' joined using your link.' }));
+    const allNotifs = [...referralNotifs, ...staticNotifications];
+    el('notifList').innerHTML = allNotifs.map(n => `<div class="notif-item"><div class="t">${n.t}</div><div class="d">${n.d}</div></div>`).join('');
+    el('bellDot').classList.remove('show');
+    el('notifOverlay').classList.add('show');
+  });
+  el('notifClose').addEventListener('click', () => el('notifOverlay').classList.remove('show'));
+  document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('show'); }));
 
-    // Init
-    loadUser();
-    loadPayouts();
-  </script>
+  // Nav switching
+  function switchPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el('page-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === name));
+    if (name === 'withdraw') loadLiveWithdrawals();
+  }
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => switchPage(btn.dataset.page));
+  });
+  document.querySelectorAll('[data-nav]').forEach(el2 => {
+    el2.addEventListener('click', () => switchPage(el2.dataset.nav));
+  });
+
+  buildSegments();
+  setupReferralLink();
+  loadState();
+  loadLiveWithdrawals();
+</script>
+
 </body>
 </html>
