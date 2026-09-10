@@ -9,7 +9,7 @@ from psycopg2.extras import RealDictCursor
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 ADMIN_ID = os.environ.get("ADMIN_ID", "7548212601")
@@ -23,16 +23,11 @@ MIN_WITHDRAWAL = 0.25
 # ---------- Database ----------
 
 def get_db():
-    # Connects to PostgreSQL using Render's DATABASE_URL
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 
 def init_db():
-    if not DATABASE_URL:
-        logging.warning("DATABASE_URL environment variable is missing!")
-        return
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -46,7 +41,7 @@ def init_db():
             checkin_streak INTEGER DEFAULT 0,
             referred_by TEXT DEFAULT '',
             referral_count INTEGER DEFAULT 0
-        );
+        )
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS activity (
@@ -56,7 +51,7 @@ def init_db():
             amount REAL,
             type TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+        )
     """)
     conn.commit()
     cur.close()
@@ -95,7 +90,8 @@ def reset_daily_if_needed(user_id, user):
 def log_activity(user_id, label, amount, type_):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO activity (user_id, label, amount, type) VALUES (%s, %s, %s, %s)", (user_id, label, amount, type_))
+    cur.execute("INSERT INTO activity (user_id, label, amount, type) VALUES (%s, %s, %s, %s)",
+                (user_id, label, amount, type_))
     conn.commit()
     cur.close()
     conn.close()
@@ -114,13 +110,10 @@ def home():
 def recent_withdrawals():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(
-        "SELECT user_id, amount, created_at FROM activity WHERE type = 'withdraw' ORDER BY id DESC LIMIT 15"
-    )
+    cur.execute("SELECT user_id, amount, created_at FROM activity WHERE type = 'withdraw' ORDER BY id DESC LIMIT 15")
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    
     result = []
     for r in rows:
         uid = str(r["user_id"])
@@ -146,14 +139,6 @@ def get_user(user_id):
     activity = cur.fetchall()
     cur.close()
     conn.close()
-    
-    # Format created_at to string for JSON serialization
-    formatted_activity = []
-    for a in activity:
-        item = dict(a)
-        item["created_at"] = str(item["created_at"])
-        formatted_activity.append(item)
-
     return jsonify({
         "balance": user["balance"],
         "total_earned": user["total_earned"],
@@ -162,7 +147,7 @@ def get_user(user_id):
         "checkin_streak": user["checkin_streak"],
         "last_checkin_date": user["last_checkin_date"],
         "referral_count": user["referral_count"],
-        "activity": formatted_activity,
+        "activity": [{"label": a["label"], "amount": a["amount"], "type": a["type"], "created_at": str(a["created_at"])} for a in activity],
     })
 
 
@@ -196,7 +181,6 @@ def adsgram_reward():
     conn.commit()
     cur.close()
     conn.close()
-    
     log_activity(user_id, "Ad reward", REWARD_PER_AD, "ad")
     send_message(ADMIN_ID, f"\U0001F4FA Ad watched by user {user_id} \u2014 +${REWARD_PER_AD:.3f}")
     return jsonify({"status": "ok", "reward": REWARD_PER_AD})
@@ -226,7 +210,6 @@ def daily_checkin():
     conn.commit()
     cur.close()
     conn.close()
-    
     log_activity(user_id, "Daily check-in", CHECKIN_REWARD, "checkin")
     send_message(ADMIN_ID, f"\U0001F4C5 Check-in by user {user_id} \u2014 streak: {streak}")
     return jsonify({"status": "ok", "reward": CHECKIN_REWARD, "streak": streak})
@@ -255,7 +238,6 @@ def request_withdrawal():
     conn.commit()
     cur.close()
     conn.close()
-    
     log_activity(user_id, f"Withdrawal requested to {wallet}", -amount, "withdraw")
     send_message(
         ADMIN_ID,
@@ -287,14 +269,8 @@ def register_referral():
     conn.commit()
     cur.close()
     conn.close()
-    
     log_activity(referrer_id, f"Referral joined: {new_user_name}", 0, "referral")
-
-    send_message(
-        referrer_id,
-        f"\U0001F389 {new_user_name} just joined EarnWave using your referral link!"
-    )
-
+    send_message(referrer_id, f"\U0001F389 {new_user_name} just joined EarnWave using your referral link!")
     return jsonify({"status": "ok"})
 
 
@@ -348,7 +324,7 @@ def bot_webhook():
         send_message(
             chat_id,
             f"Welcome to EarnWave, {first_name}!\n\n"
-            "Watch ads, earn small crypto rewards, and cash out once you hit the minimum.\n\n"
+            "Watch ads, earn rewards, and cash out once you hit the minimum.\n\n"
             "Tap below to open the app.",
             reply_markup=reply_markup,
         )
@@ -363,7 +339,6 @@ def set_webhook():
     return jsonify(resp.json())
 
 
-# Initialize the database table structure
 init_db()
 
 if __name__ == "__main__":
